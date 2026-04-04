@@ -4,8 +4,6 @@ Your portfolio is a fingerprint. Campfire Analyst reads it.
 
 A Claude skill for Zerodha users. Connects to your account, runs a full portfolio analysis, and produces three files.
 
-**Author:** Subodh Kolhe · **License:** Apache 2.0
-
 ---
 
 ## Output
