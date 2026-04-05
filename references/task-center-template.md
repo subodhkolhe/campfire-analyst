@@ -2,7 +2,7 @@
 
 ## Overview
 
-The task center is the **second tab of `campfire-dashboard.html`** — it lives inside the same file as the Overview tab, not as a separate React artifact. It presents portfolio fix tasks in an interactive checklist, implemented in **vanilla JS + HTML** consistent with the rest of the dashboard file.
+The task center is the **second tab ("Fix List") of `campfire-dashboard.html`** — it lives inside the same file as the other tabs, not as a separate React artifact. It presents portfolio fix tasks in an interactive checklist, implemented in **vanilla JS + HTML** consistent with the rest of the dashboard file.
 
 **CRITICAL: Tasks must be derived from THIS user's actual portfolio data. Do not use a static task list. Analyze the portfolio, identify issues, and generate tasks specific to what the data reveals.**
 
@@ -200,14 +200,14 @@ Minimal sticky footer at bottom:
 ## Example: Generating Tasks from a Portfolio
 
 Given a portfolio with:
-- 6 Nifty 50 MFs + 2 Nifty ETFs = 8 Nifty vehicles
-- 4 gold ETFs + 1 SGB + 1 silver MF = 6 precious metals vehicles  
-- International at 4% of total
-- 15 positions under ₹10K
-- Cash + liquid at 12% of portfolio
-- 3 ELSS funds
-- One AMC at 33% of MF portfolio
-- 5 positions down 40%+
+- 4 Nifty 50 MFs + 2 Nifty ETFs = 6 Nifty vehicles
+- 3 gold ETFs + 1 SGB = 4 precious metals vehicles
+- International at 5% of total
+- 12 positions under ₹10K
+- Cash + liquid at 10% of portfolio
+- 2 ELSS funds
+- One AMC at 28% of MF portfolio
+- 4 positions down 40%+
 
 This would generate approximately 8-12 tasks:
 1. Consolidate Nifty Trackers (consolidation, high, medium)
