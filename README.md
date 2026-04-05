@@ -2,7 +2,9 @@
 
 Your portfolio is a fingerprint. Campfire Analyst reads it.
 
-A Claude skill for Zerodha users. Connects to your account, runs a full portfolio analysis and produces three files.
+A Claude skill for Zerodha users. Connects to your account, runs a full portfolio analysis, and produces three files.
+
+**Author:** Subodh Kolhe · **Built with:** Claude (Anthropic) · **License:** Apache 2.0
 
 ---
 
@@ -10,7 +12,7 @@ A Claude skill for Zerodha users. Connects to your account, runs a full portfoli
 
 | File | What it contains |
 |------|-----------------|
-| `campfire-dashboard.html` | Two-tab HTML file — portfolio health overview and an interactive task list |
+| `campfire-dashboard.html` | Four-tab HTML app — Summary (headline + quick wins), Fix List (task center), Analysis (Vitals + portrait + sectors), X-Ray (look-through inside your mutual funds) |
 | `investment.md` | Full wealth document: allocations, sector breakdown, consolidated views, gaps |
 | `taste.md` | Lifestyle profile generated through a prediction game — phone, car, hotel tier inferred from your holdings |
 
@@ -21,8 +23,8 @@ A Claude skill for Zerodha users. Connects to your account, runs a full portfoli
 **Campfire Vitals**
 Scores your portfolio across 8 health metrics (0–100): diversification, cost efficiency, risk calibration, growth momentum, rebalancing discipline, income streams, regime adaptability, capital deployment. Each score has a one-line interpretation and a concrete fix if it's low.
 
-**Task Center**
-Every structural issue in your portfolio — fragmented holdings, underweight asset classes, dead positions, idle cash — listed with impact rating, effort estimate, and specific next steps. Lives inside the dashboard as a second tab.
+**Fix List**
+Every structural issue in your portfolio — fragmented holdings, underweight asset classes, dead positions, idle cash — listed with impact rating, effort estimate, and specific next steps. Lives inside the dashboard as the second tab.
 
 **Prediction Game**
 Claude tries to predict your lifestyle from your holdings alone — one item at a time, with the reasoning shown. You confirm or correct. Generates `taste.md` at the end.
@@ -59,7 +61,7 @@ To run a specific part:
 "Just give me my Campfire Vitals report"
 "Generate my investment.md"
 "Let's do the prediction game"
-"Show me my task center"
+"Show me my fix list"
 ```
 
 No Zerodha? Paste your holdings directly — stock name, quantity, average buy price. The skill works with whatever you give it.
@@ -80,8 +82,9 @@ campfire-analyst/
 ├── LICENSE.txt                   ← Apache 2.0
 └── references/
     ├── vitals-metrics.md         ← scoring rubrics for all 8 Campfire Vitals
-    ├── dashboard-template.md     ← HTML dashboard spec
-    ├── task-center-template.md   ← task center spec
+    ├── dashboard-template.md     ← HTML dashboard spec (four tabs)
+    ├── task-center-template.md   ← Fix List tab spec
+    ├── xray-template.md          ← Portfolio X-Ray tab spec
     ├── archetypes.md             ← investor personality archetypes
     └── prediction-chains.md      ← prediction game methodology
 ```
