@@ -2,16 +2,18 @@
 
 ## Overview
 
-The dashboard is a single self-contained `.html` file with **two tabs**:
+The dashboard is a single self-contained `.html` file with **four tabs**, organised by decision urgency:
 
-- **Overview tab** — visual summary of the entire campfire-analyst run (Parts 1-3)
-- **Task Center tab** — interactive portfolio fix list (previously a separate artifact)
+- **Summary** — headline finding, hero numbers, top 3 quick wins, multibaggers/losers
+- **Fix List** — interactive portfolio task center
+- **Analysis** — Campfire Vitals, style portrait, top holdings, sector breakdown
+- **X-Ray** — mutual fund look-through analysis (opt-in detail)
 
-Both tabs share the same design tokens and feel like one cohesive app. Generated as the very first output the user sees — before investment.md, before the prediction game.
+All four tabs share the same design tokens and feel like one cohesive app. Generated as the very first output the user sees — before investment.md, before the prediction game.
 
 **Output:** `/mnt/user-data/outputs/campfire-dashboard.html`
 
-**CRITICAL: All data must come from THIS user's portfolio. No hardcoded values. The skill should generate this HTML dynamically with the user's actual numbers.**
+**CRITICAL: All data must come from THIS user's portfolio. No hardcoded values. Generate this HTML dynamically with the user's actual numbers.**
 
 ---
 
@@ -39,7 +41,7 @@ Notion-like minimalist. White background. Inter font. No dark theme. No shadows.
 
 ### Principles
 
-1. Single page, no scrolling sections — the whole report flows vertically
+1. Single page, no scrolling sections — the whole report flows vertically within each tab
 2. Sections separated by generous whitespace (40-60px), not heavy borders
 3. Numbers in monospace, text in Inter
 4. Section headers: 18-20px, semibold, `#37352f`, no uppercase
@@ -56,8 +58,10 @@ Notion-like minimalist. White background. Inter font. No dark theme. No shadows.
 
 ```html
 <nav style="border-bottom: 1px solid #e8e8e4; margin-bottom: 40px; display: flex; gap: 24px;">
-  <button class="tab active">Overview</button>
-  <button class="tab">Task Center</button>
+  <button class="tab active" onclick="switchTab('summary',this)">Summary</button>
+  <button class="tab" onclick="switchTab('fixlist',this)">Fix List</button>
+  <button class="tab" onclick="switchTab('analysis',this)">Analysis</button>
+  <button class="tab" onclick="switchTab('xray',this)">X-Ray</button>
 </nav>
 ```
 
@@ -79,101 +83,121 @@ Notion-like minimalist. White background. Inter font. No dark theme. No shadows.
 }
 ```
 
-Clicking a tab hides the inactive panel and shows the active one. All state in vanilla JS.
+Clicking a tab hides the inactive panels and shows the active one. All state in vanilla JS.
 
 ---
 
-## Dashboard Layout
+## Tab 1: Summary Layout
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                                                     │
-│  Campfire Analyst                                   │
-│  Portfolio Intelligence Report                      │
-│  Generated Mar 3, 2026 · Zerodha Kite              │
+│  [Headline finding — one bold sentence]             │
+│                                                     │
+├─────────────────────────────────────────────────────┤
 │                                                     │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
-│  │  ₹1.94Cr │  │  +34.4%  │  │   149    │          │
-│  │  total    │  │  return  │  │holdings  │          │
+│  │  ₹X.XXCr │  │  +XX.X%  │  │   XXX    │          │
+│  │  wealth   │  │  return  │  │holdings  │          │
 │  └──────────┘  └──────────┘  └──────────┘          │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  Wealth Composition                                 │
-│                                                     │
-│  ┌─────────────────────────────────────────┐        │
-│  │  ██████████████████░░░░░░░░░░  MF 55%  │        │
-│  │  ████████████████░░░░░░░░░░░░  Eq 44%  │        │
-│  │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░  Cash 1% │        │
-│  └─────────────────────────────────────────┘        │
-│                                                     │
-│  Direct Equity    ₹84.9L   +45.9%                   │
-│  Mutual Funds     ₹1.07Cr  +26.4%                   │
-│  Cash             ₹2.4L                              │
+│  ████████████████████░░░░░░  Equity XX%             │
+│  ████████████████░░░░░░░░░░  MF XX%                 │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  Campfire Vitals Report              Overall: 71    │
+│  Top 3 Quick Wins                                   │
 │                                                     │
-│  Diversification    78  ████████░░  Good spread     │
-│  Cost Efficiency    58  ██████░░░░  Fragmented      │
-│  Risk Calibration   82  ████████░░  Well-matched    │
-│  Growth Momentum    91  █████████░  Strong gains    │
-│  Rebalancing        48  █████░░░░░  Needs cleanup   │
-│  Income Streams     72  ███████░░░  Decent yield    │
-│  Regime Adapt.      74  ███████░░░  Gold helps      │
-│  Capital Effic.     65  ██████░░░░  Excess buffer   │
+│  ⊕  [Task name]          [₹ value]  →              │
+│  ✂  [Task name]          [₹ value]  →              │
+│  ⚡  [Task name]          [₹ value]  →              │
+│                                                     │
+│  → See all tasks in Fix List                        │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  Investment Style Portrait                          │
-│                                                     │
-│  "A dual-strategy investor running active           │
-│   direct equity alongside passive MF indexing..."   │
-│  (150-250 word paragraph)                           │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Top Holdings                                       │
-│                                                     │
-│  SBIN          ₹9.25L   +119.7%                    │
-│  BHARTIARTL    ₹9.14L   +57.5%                     │
-│  PP Flexi Cap  ₹22.1L   +20.3%                     │
-│  ...top 10 across both direct + MF                  │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Sector Allocation (direct equity)                  │
-│                                                     │
-│  Banking & Finance  ████████████  24.4%             │
-│  Telecom            █████████     11.1%             │
-│  Gold/Silver        ████████      10.7%             │
-│  ...                                                │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Key Findings                                       │
-│                                                     │
-│  ⊕  8 Nifty vehicles tracking same index            │
-│  ⊕  7 gold instruments across direct + MF           │
-│  ⚖  International at 4% (target: 10-15%)           │
-│  ⚖  PPFAS = 33% of MF portfolio                    │
-│  ✂  15+ micro-positions under ₹10K                 │
-│  ⚡  ₹12.4L in low-yield liquid/arbitrage           │
-│                                                     │
-│  → Full task list in Portfolio Task Center           │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Multibaggers (25)           Biggest Losers         │
-│                                                     │
-│  NATIONALUM  +451%           ITCHOTELS  -62%        │
-│  LTFOODS     +290%           RBA        -59%        │
-│  TMCV        +273%           RAYMONDREL -56%        │
+│  🏆 Multibaggers          ⚠️ Biggest Losers          │
+│  STOCK_A  +XXX%           STOCK_X  -XX%             │
+│  STOCK_B  +XXX%           STOCK_Y  -XX%             │
 │  ...top 5 each                                      │
 │                                                     │
 └─────────────────────────────────────────────────────┘
 ```
+
+### Headline Finding
+
+Generate one bold sentence using this priority order:
+
+```
+1. Effective look-through exposure > 8% on any security
+   → "[Security] is your largest real position at X% — held across N funds you didn't consciously choose"
+
+2. High Impact + Quick Win task exists
+   → "You have N [asset] vehicles doing the same job — consolidating saves ₹X.XL in complexity"
+
+3. More than 5 multibaggers
+   → "Your stock picks are working — N positions have doubled or more, led by [top bagger] at +XXX%"
+
+4. Largest fragmentation issue
+   → "[N] gold instruments, [N] ELSS funds — one each is all you need"
+
+5. Return context
+   → "Your portfolio is [up XX.X%] overall — [beating / roughly matching / trailing] the Nifty 50 benchmark"
+```
+
+Style: `font-size: 18px; font-weight: 600; color: #37352f; line-height: 1.5`. No icon. No background. Just the sentence.
+
+### Top 3 Quick Wins
+
+Pick tasks where `impact === "high"` and `effort === "low"`. Show max 3.
+Each row: category icon + task name + ₹ value addressable + arrow.
+Clicking a row switches to the Fix List tab and expands that task.
+
+---
+
+## Tab 2: Fix List Layout
+
+Full task center. See `references/task-center-template.md` for complete spec.
+Implement in vanilla JS + HTML. Expandable rows, checkbox completion, category filters.
+
+---
+
+## Tab 3: Analysis Layout
+
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│  Campfire Vitals              Overall: XX/100       │
+│                                                     │
+│  [8 metrics with bars and one-line notes]           │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Investment Style Portrait                          │
+│  [150-250 word paragraph]                           │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Top 10 Holdings                                    │
+│  [merged direct + MF, sorted by value]              │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Sector Allocation (direct equity)                  │
+│  [horizontal bars]                                  │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## Tab 4: X-Ray Layout
+
+Full Portfolio X-Ray. See `references/xray-template.md` for complete spec.
+Loads live data from mfdata.in when the tab is clicked (browser-side JavaScript).
 
 ---
 
@@ -283,10 +307,6 @@ th {
 
 Horizontal bars using simple div widths. Max width = largest sector %. Color: `#37352f` at 30% opacity for a soft, Notion-like feel. No bright colors for sector bars — let the numbers speak.
 
-### Key Findings
-
-Each finding gets a category icon (⊕ ⚖ ✂ ⚡ ◎) colored with the Notion category palette. Presented as a simple list with generous line-height, not a table.
-
 ### Responsive
 
 - Max-width 720px, centered
@@ -304,12 +324,14 @@ When generating this dashboard, the skill should:
 2. Calculate all 8 Campfire Vitals scores using the vitals-metrics.md reference
 3. Write the investment style portrait paragraph
 4. Generate all portfolio tasks using the task-center-template.md reference
-5. Identify key findings (4-6 lines, teaser only — full list is in the Task Center tab)
-6. Select top 10 holdings across both direct + MF by current value
-7. Select top 5 multibaggers and top 5 losers
-8. Build the sector allocation from direct equity
-9. Inject all values into a single HTML file with two tabs: Overview and Task Center
-10. Save to `/mnt/user-data/outputs/campfire-dashboard.html`
-11. Present to user
+5. Classify all MF funds into tiers and prepare the JavaScript X-Ray engine using xray-template.md
+6. Pick the single headline finding using the priority order in the Summary tab spec
+7. Identify the top 3 Quick Win tasks (high impact + low effort)
+8. Select top 10 holdings across both direct + MF by current value
+9. Select top 5 multibaggers and top 5 losers
+10. Build the sector allocation from direct equity
+11. Inject all values into a single HTML file with four tabs: Summary, Fix List, Analysis, X-Ray
+12. Save to `/mnt/user-data/outputs/campfire-dashboard.html`
+13. Present to user
 
-**The dashboard is the FIRST visual output the user sees.** Overview tab gives the complete picture at a glance. Task Center tab is immediately accessible without opening a second file.
+**The dashboard is the FIRST visual output the user sees.** Summary tab gives the headline and the three most actionable wins immediately. Fix List tab is the full task center. Analysis tab goes deeper. X-Ray tab reveals what's actually inside every mutual fund.
