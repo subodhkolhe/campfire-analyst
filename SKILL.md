@@ -1,6 +1,6 @@
 ---
 name: campfire-analyst
-description: "Your portfolio is a fingerprint. Campfire Analyst reads it. Connects to Zerodha, runs a full-stack analysis — sector breakdown, Campfire Vitals scoring, fragmentation audit, actionable task list — and then plays a prediction game: your phone, your car, your hotel tier, all inferred from your holdings. Three output files: campfire-dashboard.html, investment.md, taste.md. Trigger on: portfolio review, Campfire Vitals report, investment.md, taste.md, predict me from stocks, campfire analyst, task center, consumer identity, financial health check."
+description: "Your portfolio is a fingerprint. Campfire Analyst reads it. Connects to Zerodha, runs a full-stack analysis — sector breakdown, Campfire Vitals scoring, fragmentation audit, actionable task list, and a Portfolio X-Ray that looks inside every mutual fund to reveal your true underlying exposure — and then plays a prediction game: your phone, your car, your hotel tier, all inferred from your holdings. Outputs: campfire-dashboard.html (four-tab visual app), investment.md, taste.md. Trigger on: portfolio review, Campfire Vitals report, investment.md, taste.md, predict me from stocks, campfire analyst, task center, consumer identity, financial health check, portfolio x-ray, look-through analysis."
 author: Subodh Kolhe
 license: Apache 2.0 — complete terms in LICENSE.txt
 ---
@@ -15,7 +15,7 @@ license: Apache 2.0 — complete terms in LICENSE.txt
 Campfire Analyst reads your Zerodha portfolio and produces a complete picture of your investments — what you own, how it's performing, what's broken, and what your money reveals about you as a person.
 
 It generates three files:
-- **campfire-dashboard.html** — your portfolio at a glance, plus a full task list of things to fix
+- **campfire-dashboard.html** — four-tab visual app: Summary (headline + quick wins), Fix List (task center), Analysis (Vitals + portrait + sectors), and X-Ray (look-through inside your mutual funds)
 - **investment.md** — a detailed wealth document you can save or share with an advisor
 - **taste.md** — a lifestyle identity profile built through a prediction game
 
@@ -25,7 +25,7 @@ Just type `/campfire-analyst` in the chat. That's it. No setup, no options to co
 You'll be asked to log into your Zerodha account via a one-click link. Once authorized, the analysis runs automatically.
 
 ### What happens next
-1. You'll see the **Campfire Dashboard** — a two-tab HTML file. The Overview tab shows your portfolio health, Campfire Vitals scores, top holdings, and sector breakdown. The Task Center tab lists everything worth fixing, ranked by impact.
+1. You'll see the **Campfire Dashboard** — a four-tab HTML file. The **Summary** tab leads with a single headline finding and the three most actionable quick wins. The **Fix List** tab has the full portfolio task center. The **Analysis** tab goes deeper — Campfire Vitals scores, investment style portrait, and sector breakdown. The **X-Ray** tab looks inside every mutual fund and maps your true underlying exposure — click it to load live data (requires internet connection in your browser).
 2. **investment.md** follows immediately — the full wealth document with deep allocation tables.
 3. Then the **prediction game** begins — Claude tries to guess your phone, car, watch, hotel preference and more from your portfolio alone, one prediction at a time. At the end it generates taste.md.
 
@@ -34,7 +34,8 @@ You can ask for specific pieces directly:
 - *"Just give me my Campfire Vitals report"*
 - *"Generate my investment.md"*
 - *"Let's do the prediction game"*
-- *"Show me my task center"*
+- *"Show me my fix list"*
+- *"Run Portfolio X-Ray"*
 
 ### If you don't use Zerodha
 You can still run the analysis manually. Share your holdings as a screenshot, CSV, or just paste your top 20-30 positions with quantities and average buy prices. Claude will work with whatever you provide.
@@ -46,20 +47,19 @@ It doesn't execute any trades, place orders, or modify your account in any way. 
 
 ## For Skill Authors: Framework Reference
 
-A six-part portfolio intelligence framework that transforms raw holdings data into a complete financial + consumer identity profile.
+A seven-part portfolio intelligence framework that transforms raw holdings data into a complete financial + consumer identity profile.
 
-## Overview
-
-When triggered, this skill runs **six sequential analyses** on the user's portfolio:
+When triggered, this skill runs **seven sequential steps** on the user's portfolio:
 
 | # | Analysis | What It Produces | Reference File |
 |---|----------|-----------------|----------------|
 | 1 | Deep Portfolio Analysis | Sector breakdown, winners/losers, asset class mix, MF breakdown | (computed internally — feeds dashboard) |
 | 2 | Campfire Vitals Report | 8 custom financial health markers scored 0-100 | `references/vitals-metrics.md` (computed internally — feeds dashboard) |
 | 3 | Investment Style Portrait | Written paragraph characterising the investor's style and blind spots | (computed internally — feeds dashboard) |
-| 4 | Campfire Dashboard + Task Center | Tabbed HTML file — **Overview tab** (Parts 1-3 visual summary) + **Task Center tab** (actionable fix list) | `references/dashboard-template.md`, `references/task-center-template.md` |
-| 5 | investment.md Generation | Complete wealth document with deeper consolidated allocation tables | (file output) |
-| 6 | taste.md Consumer Identity | Archetype extraction → lifestyle prediction game | `references/archetypes.md`, `references/prediction-chains.md` |
+| 4 | Portfolio X-Ray Classification | Fund tier classification + JavaScript engine for browser-side look-through | `references/xray-template.md` (embedded in dashboard HTML) |
+| 5 | Campfire Dashboard | Four-tab HTML file — **Summary** · **Fix List** · **Analysis** · **X-Ray** | `references/dashboard-template.md`, `references/task-center-template.md`, `references/xray-template.md` |
+| 6 | investment.md Generation | Complete wealth document with deeper consolidated allocation tables | (file output) |
+| 7 | taste.md Consumer Identity | Archetype extraction → lifestyle prediction game | `references/archetypes.md`, `references/prediction-chains.md` |
 
 **CRITICAL: Every analysis must be derived fresh from THIS user's data. Do not carry over any assumptions, archetypes, predictions, or personal details from any prior conversation. Every user is unique. Every portfolio tells a different story.**
 
@@ -100,7 +100,7 @@ Compute portfolio totals:
 
 ## Part 1: Deep Portfolio Analysis
 
-> **Do not present this section inline.** Compute all values silently. Everything here feeds directly into the Campfire Dashboard (Part 4), which is the first and only time this data is shown to the user.
+> **Do not present this section inline.** Compute all values silently. Everything here feeds directly into the Campfire Dashboard (Part 5), which is the first and only time this data is shown to the user.
 
 ### 1.1 Portfolio Snapshot Table
 
@@ -157,23 +157,23 @@ These consolidated views reveal the TRUE allocation that individual portfolio vi
 
 ## Part 2: Campfire Vitals Report
 
-> **Do not present this section inline.** Compute all 8 scores silently. Output flows exclusively into the Campfire Dashboard (Part 4).
+> **Do not present this section inline.** Compute all 8 scores silently. Output flows exclusively into the Campfire Dashboard (Part 5).
 
 Read the reference file for metric definitions:
 → See `references/vitals-metrics.md`
 
-Score each of the 8 financial health markers on a 0-100 scale. Map them from biological readiness metrics to financial equivalents. Present as a dashboard with:
+Score each of the 8 financial health markers on a 0-100 scale. Map them from biological readiness metrics to financial equivalents. Compute and store:
 - Each metric name, score, and one-line interpretation
-- Overall Financial Recovery Score (weighted average)
+- Campfire Vitals Score (weighted average of all 8 metrics)
 - One paragraph summary of financial fitness
 
-**The Campfire Vitals metaphor:** Just as The Campfire Vitals framework maps biological readiness metrics through HRV, RHR, sleep quality etc., Campfire Vitals tracks portfolio readiness through diversification quality, risk calibration, capital efficiency etc.
+**The Campfire Vitals metaphor:** Just as fitness trackers measure biological readiness through HRV, resting heart rate, and sleep quality, Campfire Vitals tracks portfolio readiness through diversification quality, risk calibration, capital efficiency, and more.
 
 ---
 
 ## Part 3: Investment Style Portrait
 
-> **Do not present this section inline.** Write the paragraph internally. It is presented once, inside the Campfire Dashboard (Part 4).
+> **Do not present this section inline.** Write the paragraph internally. It is presented once, inside the Campfire Dashboard (Part 5).
 
 Write a single rich paragraph (150-250 words) that captures:
 
@@ -187,57 +187,190 @@ Write a single rich paragraph (150-250 words) that captures:
 
 ---
 
-## Part 4: Campfire Dashboard + Task Center
+## Part 4: Portfolio X-Ray
 
-**This is the first thing the user sees — and the only place Parts 1-3 are presented.** Do not summarise or preview any analysis before generating this. Go straight from data-pulling to this file.
+> **Do not present this section inline.** Compute the fund classification silently. The actual API calls happen in the user's browser at runtime via JavaScript — NOT from Claude's container. Claude's job is to generate correct JavaScript in the HTML dashboard that performs the look-through when the tab is opened.
 
-Generate a **single self-contained HTML file** with two tabs at the top:
+This is Campfire Analyst's deepest analysis. It classifies every MF held, then generates a JavaScript X-Ray engine inside the dashboard HTML that fetches mfdata.in at runtime and maps the true exposure across stocks, debt, and gold — merged with direct equity holdings.
 
-- **Overview tab** — the full visual portfolio summary (Parts 1-3)
-- **Task Center tab** — the interactive fix list (what was previously Part 7)
+Read the reference file for full spec:
+→ See `references/xray-template.md`
 
-Read both reference files for the full spec:
-→ See `references/dashboard-template.md` for the Overview tab design
-→ See `references/task-center-template.md` for the Task Center tab design
+### Architecture: Browser-Side Fetching
 
-### Tab Structure
+**CRITICAL: mfdata.in is fetched via JavaScript in the user's browser — not by Claude.**
+Claude's container cannot reach mfdata.in. The user's browser can. This is intentional — data is always fresh and no API calls happen before the user opens the tab.
+
+Claude's job in Part 4:
+1. Classify each MF fund (see below)
+2. Embed the classification + fund data as a JavaScript array in the HTML
+3. The JavaScript engine in the X-Ray tab does the fetching when clicked
+
+### Four-Tier Coverage Model
+
+Classify every MF fund into one of four tiers. Each tier gets different treatment:
+
+**Tier 1 — Live stock look-through**
+Funds: `active_equity` (flexi cap, large cap, ELSS, multi-asset, thematic)
+Also try: `index` funds — attempt mfdata.in first, use if data returns
+Action: JavaScript fetches `mfdata.in/api/v1/families/{id}/holdings` at runtime
+Output: Full stock-by-stock look-through with ₹ values
+
+**Tier 2 — Approximate index look-through**
+Funds: `index` funds where Tier 1 fetch fails (NOT_FOUND from mfdata.in)
+Action: Use embedded approximate top-weight data for major indices:
+- Nifty 50 top holdings: HDFCBANK ~13%, ICICIBANK ~8%, RELIANCE ~8%, INFY ~6%, TCS ~5%, BHARTIARTL ~4%, HINDUNILVR ~3%, BAJFINANCE ~3%, KOTAKBANK ~3%, LT ~3%
+- Nifty LargeMidCap 250 / Nifty Smallcap 250: Attribute to "Index — constituents not individually mapped"
+Output: Approximate top-10 stock look-through, labelled "Approximate — based on index composition"
+
+**Tier 3 — Asset class attribution**
+Funds: Commodity FOFs (gold/silver), international FOFs (US equity)
+Action: No stock-level data. Count fund value toward the correct asset class:
+- Gold ETF FOF, Gold FOF → gold exposure
+- Silver ETF FOF → silver exposure
+- Multi-asset FOF → attempt mfdata.in; if fails, use known asset split from fund factsheet (e.g. Zerodha Multi Asset ≈ 65% equity + 17.5% gold + 17.5% silver)
+- Nasdaq 100 FOF, S&P 500 FOF → international/US equity exposure
+Output: Shows correctly in Asset Class Look-Through Summary, labelled "Via FOF"
+
+**Tier 4 — Cash equivalent**
+Funds: Arbitrage, liquid, overnight
+Action: No look-through. Show as cash buffer in asset class summary.
+Output: Correctly attributed in allocation, not in stock table
+
+### Classification Keywords
+
+```
+Tier 1 active_equity:  Flexi Cap, Large Cap, ELSS, Multi Asset Allocation,
+                        Thematic, Sectoral, Small Cap, Mid Cap, Balanced
+
+Tier 1/2 index:        "Nifty", "Sensex", "Index Fund", "Index ETF",
+                        "Momentum", "Smallcap 250", "LargeMidcap", "Equal Weight"
+
+Tier 3 commodity_fof:  "Gold ETF", "Silver ETF", "Gold BeES", "Silver BeES",
+                        "Gold FOF", "Silver FOF", "Commodity"
+
+Tier 3 international:  "Nasdaq", "S&P 500", "SP 500", "US Equity",
+                        "Global", "International", "Overseas"
+
+Tier 3 multi_asset_fof: "Multi Asset" + "FOF" or "Passive FOF" or "FoF"
+
+Tier 4 arbitrage:      "Arbitrage", "Liquid", "Overnight", "Money Market",
+                        "Ultra Short"
+```
+
+### What Claude Generates
+
+Claude outputs in the X-Ray tab JavaScript:
+```javascript
+const MF_FUNDS = [
+  {name:"FUND NAME", search:"search query", value:NNNN, tier:1, type:"active_equity"},
+  {name:"FUND NAME", search:"", value:NNNN, tier:2, type:"index", indexName:"Nifty 50"},
+  {name:"FUND NAME", search:"", value:NNNN, tier:3, type:"commodity_fof", assetClass:"silver"},
+  {name:"FUND NAME", search:"", value:NNNN, tier:4, type:"arbitrage"},
+  ...
+];
+```
+
+The JavaScript engine handles all fetching, look-through calculation, and rendering.
+See `references/xray-template.md` for the full JavaScript spec.
+
+---
+
+## Part 5: Campfire Dashboard
+
+**This is the first thing the user sees — and the only place Parts 1-4 are presented.** Do not summarise or preview any analysis before generating this. Go straight from data-pulling to this file.
+
+Generate a **single self-contained HTML file** with four tabs, organised by decision urgency — not output type:
 
 ```html
-<!-- Two tabs, clean pill or underline style -->
 <nav>
-  <button class="tab active">Overview</button>
-  <button class="tab">Task Center</button>
+  <button class="tab active">Summary</button>
+  <button class="tab">Fix List</button>
+  <button class="tab">Analysis</button>
+  <button class="tab">X-Ray</button>
 </nav>
 ```
 
-- Tabs are top-level navigation — toggling between them hides/shows each panel
-- Active tab uses a subtle underline or pill indicator in `#37352f`
-- Inactive tab text in `#787774`
-- No heavy tab borders or backgrounds — keep it Notion-like
+Read the reference files for full design specs:
+→ `references/dashboard-template.md` — design tokens, layout, shared CSS
+→ `references/task-center-template.md` — Fix List tab
+→ `references/xray-template.md` — X-Ray tab
 
-### Overview Tab Contents
+---
 
-1. **Hero metrics** — total wealth, overall return %, total holdings count (3 large numbers at top)
-2. **Wealth composition** — horizontal stacked bar showing direct equity vs. MF vs. cash split
-3. **Campfire Vitals Report** — all 8 scores with thin colored progress bars and one-line interpretations
-4. **Investment Style Portrait** — the paragraph from Part 3
-5. **Top 10 Holdings** — merged list across direct equity and MF, sorted by current value
-6. **Sector Allocation** — horizontal bars for direct equity sectors
-7. **Key Findings** — 4-6 of the most important structural issues, with category icons (⊕ ⚖ ✂ ⚡ ◎). This is a **teaser, not a full list** — each finding should be one tight line. End with "→ See Task Center for full fix list" with a clickable link that switches to the Task Center tab.
-8. **Multibaggers & Losers** — top 5 each, side by side
+### Tab 1: Summary
 
-### Task Center Tab Contents
+**Answers: "Am I OK?" — fast read, no scrolling required.**
 
-Generate all portfolio fix tasks as per `references/task-center-template.md`. The task data, categories, interaction model, and design spec are unchanged — it just lives inside this HTML file instead of a separate JSX artifact.
+**1. Headline Finding**
+One bold sentence. The single most important insight from the entire analysis.
+Use this priority order to pick it:
 
-Implement the task center in **vanilla JS + HTML** (not React), consistent with the HTML file format. Use `<details>`/`<summary>` or click handlers for expand/collapse. All state in JS variables.
+```
+1. Any security with effective look-through exposure > 8% of portfolio
+   → "[Stock] is your largest position at X% — you own it across N funds"
+2. Any High Impact + Quick Win task
+   → "You have N Nifty 50 funds doing the same job — consolidating saves ₹X.XL in complexity"
+3. More than 5 multibaggers
+   → "Your stock picks are working — N positions have doubled or more"
+4. Largest fragmentation issue
+   → "X gold instruments, Y ELSS funds — one each would do the same job"
+5. Return vs estimated Nifty 50 benchmark (~12% annualised)
+   → "Your portfolio is [beating / trailing] the Nifty 50 benchmark"
+```
+
+Style: 18-20px, font-weight 600, `#37352f`. No icon, no colour. Just the sentence.
+
+**2. Hero Numbers**
+Three cards: Total Wealth · Overall Return % · Holdings Count
+
+**3. Wealth Composition Bar**
+Horizontal stacked bar: Direct Equity vs. MF vs. Cash.
+Show ₹ value and return % for each segment below the bar.
+
+**4. Top 3 Quick Wins**
+From the task list, pick the 3 tasks where `impact = "high"` and `effort = "low"`.
+Show as simple rows — task name, one-line description, ₹ value addressable.
+Each row is clickable — clicking opens the Fix List tab with that task expanded.
+
+**5. Multibaggers & Losers**
+Top 5 multibaggers and top 5 losers, side by side.
+
+---
+
+### Tab 2: Fix List
+
+**Answers: "What should I do?" — the most actionable tab.**
+
+Full task center as per `references/task-center-template.md`. No changes to task logic or design.
+Implement in vanilla JS + HTML. All state in JS variables.
+
+---
+
+### Tab 3: Analysis
+
+**Answers: "Why does my portfolio look this way?" — for the curious.**
+
+1. **Campfire Vitals** — all 8 scores with progress bars and one-line interpretations. Overall score.
+2. **Investment Style Portrait** — the paragraph from Part 3.
+3. **Top 10 Holdings** — merged list across direct equity and MF, sorted by current value.
+4. **Sector Allocation** — horizontal bars for direct equity sectors.
+
+---
+
+### Tab 4: X-Ray
+
+**Answers: "What's actually inside my funds?" — opt-in detail.**
+
+Full Portfolio X-Ray as per `references/xray-template.md`. Stays as its own tab so the look-through table doesn't pollute the Analysis tab on mobile.
+
+---
 
 ### Shared Design
 
-Both tabs share the same design tokens — same font, colors, spacing. The file feels like one cohesive app, not two things stitched together.
+All four tabs share the same design tokens:
 
 ```css
-/* Shared tokens — same as dashboard-template.md */
 --bg: #ffffff;
 --surface: #f7f7f5;
 --border: #e8e8e4;
@@ -245,15 +378,13 @@ Both tabs share the same design tokens — same font, colors, spacing. The file 
 --text-secondary: #787774;
 ```
 
-**Design:** Notion-like minimalist. White background, `#f7f7f5` card surfaces, Inter font, thin `#e8e8e4` dividers. No dark theme, no shadows, no gradients. Max-width 720px, centered. Self-contained HTML with inline CSS and inline JS.
+Notion-like minimalist. White background, Inter font, thin dividers. No dark theme, no shadows, no gradients. Max-width 720px, centered. Self-contained HTML with inline CSS and inline JS.
 
 Save to `/mnt/user-data/outputs/campfire-dashboard.html` and present to user.
 
 ---
 
-## Part 5: investment.md Generation
-
-## Part 5: investment.md Generation
+## Part 6: investment.md Generation
 
 Compile Parts 1-3 into a structured markdown document with these sections:
 
@@ -271,11 +402,11 @@ Save to `/mnt/user-data/outputs/investment.md` and present to user.
 
 ---
 
-## Part 6: taste.md Consumer Identity
+## Part 7: taste.md Consumer Identity
 
 **This is the interactive, conversational part. It should feel like a game, not a report.**
 
-### 5.1 Extract the Personality Archetype
+### 7.1 Extract the Personality Archetype
 
 Read the reference file for archetype definitions:
 → See `references/archetypes.md`
@@ -291,7 +422,7 @@ Analyze the portfolio for 6 behavioral signals:
 
 Map to archetype(s). Most people are 2-3 archetypes blended. Identify primary + secondary.
 
-### 5.2 The Prediction Game
+### 7.2 The Prediction Game
 
 Read the reference file for prediction methodology:
 → See `references/prediction-chains.md`
@@ -329,7 +460,7 @@ Present predictions ONE AT A TIME, starting with highest confidence domains:
 - Celebrate misses as discoveries about what data alone can't capture
 - Check consistency across predictions (price tier, brand philosophy, hold period should align)
 
-### 5.3 Generate taste.md
+### 7.3 Generate taste.md
 
 After the prediction game, compile:
 
@@ -351,14 +482,15 @@ Save to `/mnt/user-data/outputs/taste.md` and present to user.
 When triggered, run in this order:
 
 1. **Pull data** (Step 0) — get holdings, MF, margins
-2. **Compute silently** (Parts 1-3) — run all analysis, score Campfire Vitals metrics, write style portrait, generate task list. **Do not output anything to the user yet.**
-3. **Campfire Dashboard + Task Center** (Part 4) — generate single tabbed HTML file, save, present. **This is the first thing the user sees.**
-4. **Generate investment.md** (Part 5) — save the full wealth document, present to user
-5. **taste.md Prediction Game** (Part 6) — interactive, takes multiple turns
+2. **Compute silently** (Parts 1-3) — run all analysis, score Campfire Vitals, write style portrait, generate task list. **Do not output anything to the user yet.**
+3. **Portfolio X-Ray classification** (Part 4) — classify every MF fund into the four-tier coverage model. Prepare the JavaScript fund data array for the dashboard. **No API calls happen here — fetching happens in the user's browser when they click the X-Ray tab.**
+4. **Campfire Dashboard** (Part 5) — generate single four-tab HTML file (Summary + Fix List + Analysis + X-Ray), save, present. **This is the first thing the user sees.**
+5. **Generate investment.md** (Part 6) — save the full wealth document, present to user
+6. **taste.md Prediction Game** (Part 7) — interactive, takes multiple turns
 
-Steps 1-4 run in a single response. Part 5 follows immediately after. Part 6 requires back-and-forth conversation.
+Steps 1-4 run in a single response. Part 6 follows immediately after. Part 7 requires back-and-forth conversation.
 
-If the user asks for a specific part only (e.g., "just give me my Campfire Vitals report" or "generate my taste.md"), jump to that section directly — but always pull data first.
+If the user asks for a specific part only (e.g., "just give me my Campfire Vitals report", "run Portfolio X-Ray", or "generate my taste.md"), jump to that section directly — but always pull data first.
 
 ---
 
@@ -379,8 +511,8 @@ Look for the accumulation-without-consolidation pattern: same asset class across
 - Cultural preferences (food, entertainment, travel): 30-50% accuracy — always caveat these and ask for origin/city data
 
 ### The File Hierarchy
-- **campfire-dashboard.html** = the consolidated app (Overview tab + Task Center tab — first thing the user sees)
+- **campfire-dashboard.html** = the consolidated app (Summary → Fix List → Analysis → X-Ray — first thing the user sees)
 - **investment.md** = the wealth document (pure data, no personal predictions)
 - **taste.md** = the identity document (predictions, validated through conversation)
 
-The dashboard gives the overview and the fix list in one place. investment.md goes deep. taste.md gets personal.
+The dashboard gives the full picture in one place. investment.md goes deep. taste.md gets personal.
