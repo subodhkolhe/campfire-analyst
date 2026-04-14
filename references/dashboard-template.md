@@ -169,35 +169,78 @@ Implement in vanilla JS + HTML. Expandable rows, checkbox completion, category f
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                                                     │
+│  — Self-assessment ————————————————————————————————│
 │  Campfire Vitals              Overall: XX/100       │
-│                                                     │
 │  [8 metrics with bars and one-line notes]           │
-│                                                     │
 ├─────────────────────────────────────────────────────┤
-│                                                     │
 │  Investment Style Portrait                          │
 │  [150-250 word paragraph]                           │
-│                                                     │
 ├─────────────────────────────────────────────────────┤
+│  — What am I betting on? ——————————————————————────│
+│  Thematic Map                                       │
 │                                                     │
-│  Top 10 Holdings                                    │
-│  [merged direct + MF, sorted by value]              │
-│                                                     │
+│  India Financial Deepening  ████████████  XX%  ₹XL │
+│  India PSU Reform           ████████      XX%  ₹XL │
+│  India Infrastructure       ███████       XX%  ₹XL │
+│  Global Tech (US)           █████         XX%  ₹XL │
+│  ...                                               │
+│  [2-3 sentence thematic portrait]                  │
+│  Gaps: ⚠️ Zero India Defence · Zero Global Consump. │
 ├─────────────────────────────────────────────────────┤
+│  — How am I performing? ————————————————————————— │
+│  vs Nifty 50 (approximate)                          │
+│  +XX.X% vs Nifty ~XX–XX%  (~X–X yr window)         │
+│  Verdict: Beating / Roughly matching / Trailing     │
+├─────────────────────────────────────────────────────┤
+│  — What are my risks? ——————————————————————————— │
+│  Concentration Risk                                 │
+│  Direct + MF look-through (as of Mar 2026) ←updates│
 │                                                     │
+│  Top 1  XX%  [████░░░░░░]  [flag if > 10%]         │
+│  Top 3  XX%  [████████░░]  [flag if > 25%]         │
+│  Top 5  XX%  [█████████░]                           │
+│                                                     │
+│  ⚠️ STOCK_A is XX% combined (direct + N funds)      │
+│     If it halved → portfolio drops ₹X.XL            │
+│  → Full breakdown in Fund Detail tab                │
+├─────────────────────────────────────────────────────┤
+│  — Portfolio health at a glance ————————————————— │
+│  ┌─────────────┐  ┌─────────────┐                  │
+│  │ Expense     │  │ Liquidity   │                  │
+│  │ ₹X,XXX/yr  │  │ XX% liquid  │                  │
+│  │ X.X% of MFs │  │ ₹X.XL locked│                  │
+│  └─────────────┘  └─────────────┘                  │
+│  ┌─────────────┐  ┌─────────────┐                  │
+│  │ Dividend    │  │ Beta        │                  │
+│  │ ₹X,XXX/yr  │  │ X.XX        │                  │
+│  │ X.X% yield  │  │ [Aggressive]│                  │
+│  └─────────────┘  └─────────────┘                  │
+├─────────────────────────────────────────────────────┤
+│  — The raw data ————————————————————————————————— │
+│  Top 10 Holdings  (direct + MF, by value)           │
+├─────────────────────────────────────────────────────┤
 │  Sector Allocation (direct equity)                  │
 │  [horizontal bars]                                  │
-│                                                     │
 └─────────────────────────────────────────────────────┘
 ```
+
+**On page load:** Concentration Risk shows direct-equity-only numbers with label "Direct equity only — loading MF data...". When background X-Ray fetch completes, numbers update to combined view.
 
 ---
 
 ## Tab 4: X-Ray Layout
 
-Full Portfolio X-Ray. See `references/xray-template.md` for complete spec.
-Loads live data from mfdata.in when the tab is clicked (browser-side JavaScript).
+The detail view behind the Concentration Risk numbers. Shows the supporting evidence — not a second concentration view.
+
+Contents:
+1. Orientation note: "These are the fund holdings behind your Concentration Risk numbers"
+2. Full security-by-security look-through table (sortable, filterable)
+3. Fund overlap map — which fund pairs are redundant
+4. Asset class look-through — true allocation across equity/debt/gold/international/cash
+5. Coverage summary — which funds loaded live, which are approximate, which are skipped
+
+Data loads in background on page open. Tab shows a loading indicator until ready.
+See `references/xray-template.md` for full spec.
 
 ---
 
@@ -323,15 +366,22 @@ When generating this dashboard, the skill should:
 1. Compute all values from the raw holdings/MF data
 2. Calculate all 8 Campfire Vitals scores using the vitals-metrics.md reference
 3. Write the investment style portrait paragraph
-4. Generate all portfolio tasks using the task-center-template.md reference
-5. Classify all MF funds into tiers and prepare the JavaScript X-Ray engine using xray-template.md
-6. Pick the single headline finding using the priority order in the Summary tab spec
-7. Identify the top 3 Quick Win tasks (high impact + low effort)
-8. Select top 10 holdings across both direct + MF by current value
-9. Select top 5 multibaggers and top 5 losers
-10. Build the sector allocation from direct equity
-11. Inject all values into a single HTML file with four tabs: Summary, Fix List, Analysis, X-Ray
-12. Save to `/mnt/user-data/outputs/campfire-dashboard.html`
-13. Present to user
+4. Compute thematic map (section 1.9) — assign every holding to themes, compute ₹ and % per theme, write thematic portrait
+5. Compute concentration risk (section 1.7) — top 1/3/5/10%, sector flags, halving scenario
+6. Compute benchmark context (section 1.8) — infer portfolio age, compute verdict
+7. Compute expense ratio audit (section 1.10) — annual cost in ₹, savings opportunity
+8. Compute liquidity profile (section 1.11) — % accessible quickly, locked value
+9. Compute dividend yield (section 1.12) — estimated annual income
+10. Compute weighted portfolio beta (section 1.13)
+11. Generate all portfolio tasks using task-center-template.md — including thematic gap, expense, and liquidity tasks
+12. Classify all MF funds into tiers and prepare the JavaScript X-Ray engine using xray-template.md
+13. Pick the single headline finding using the priority order in the Summary tab spec
+14. Identify the top 3 Quick Win tasks (high impact + low effort)
+15. Select top 10 holdings across both direct + MF by current value
+16. Select top 5 multibaggers and top 5 losers
+17. Build the sector allocation from direct equity
+18. Inject all values into a single HTML file with four tabs: Summary, Fix List, Analysis, X-Ray
+19. Save to `/mnt/user-data/outputs/campfire-dashboard.html`
+20. Present to user
 
 **The dashboard is the FIRST visual output the user sees.** Summary tab gives the headline and the three most actionable wins immediately. Fix List tab is the full task center. Analysis tab goes deeper. X-Ray tab reveals what's actually inside every mutual fund.
