@@ -4,15 +4,14 @@ Your portfolio is a fingerprint. Campfire Analyst reads it.
 
 A Claude skill for Zerodha users. Connects to your account, runs a full portfolio analysis, and produces three files.
 
-
 ---
 
 ## Output
 
 | File | What it contains |
 |------|-----------------|
-| `campfire-dashboard.html` | Four-tab HTML app — Summary (headline + quick wins), Fix List (task center), Analysis (Vitals + portrait + sectors), X-Ray (look-through inside your mutual funds) |
-| `investment.md` | Full wealth document: allocations, sector breakdown, consolidated views, gaps |
+| `campfire-dashboard.html` | Four-tab HTML app — Summary (headline + quick wins), Fix List (task center), Analysis (Vitals + thematic map + concentration + benchmark + portfolio metrics), X-Ray (fund look-through with Sharpe/Sortino/Alpha quality scores) |
+| `investment.md` | Full wealth document: allocations, thematic map, sector breakdown, expense audit, liquidity, dividend yield, beta, consolidated views |
 | `taste.md` | Lifestyle profile generated through a prediction game — phone, car, hotel tier inferred from your holdings |
 
 ---
