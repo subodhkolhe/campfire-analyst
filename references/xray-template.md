@@ -2,11 +2,40 @@
 
 ## Overview
 
-The Portfolio X-Ray is the **fourth tab of `campfire-dashboard.html`**. It maps the true underlying exposure across all mutual funds — merged with direct equity holdings.
+The Portfolio X-Ray is the **fourth tab of `campfire-dashboard.html`**. It is the **detail view** behind the Concentration Risk numbers shown in the Analysis tab.
 
-**Architecture: Browser-side JavaScript engine.** Claude does NOT fetch mfdata.in. Claude classifies each fund and embeds a JavaScript array in the dashboard HTML. When the user clicks the X-Ray tab, JavaScript in the browser fetches mfdata.in and renders the results live. This means data is always fresh and the container's network limitations don't apply.
+**Separation of concerns:**
+- **Analysis tab → Concentration Risk section** = the conclusion ("You are 8.4% in HDFC Bank combined")
+- **X-Ray tab** = the evidence ("Here's how that breaks down across PPFAS, DSP, and direct equity")
 
-**Coverage model: Four tiers.** Different fund types get different treatment. Target coverage: ~85% at stock level, ~100% at asset class level.
+The user gets one answer to "am I overweight?" in one place. The X-Ray tab is for those who want to understand why.
+
+**Architecture: Background fetch on page load.** The JavaScript engine starts fetching mfdata.in immediately when the HTML file opens — not when the user clicks the X-Ray tab. This ensures:
+1. Concentration Risk in the Analysis tab has combined numbers ready by the time the user reads it
+2. The X-Ray tab is already populated when clicked — no waiting
+
+**Coverage model: Four tiers.** Target: ~85% stock-level, ~100% asset-class-level.
+
+---
+
+## Fetch Trigger
+
+```javascript
+// Runs immediately on page load — not on tab click
+document.addEventListener('DOMContentLoaded', () => {
+  loadXray(); // fetch all Tier 1 funds in background
+});
+
+async function loadXray() {
+  // ... fetch mfdata.in for each Tier 1/2 fund
+  // When complete: updateConcentrationRisk(allExposure);  ← updates Analysis tab
+  //                renderXrayTab(allExposure);             ← populates X-Ray tab
+}
+```
+
+The Analysis tab's Concentration Risk section starts with direct-equity-only numbers (computed by Claude at generation time). When `loadXray()` completes, it calls `updateConcentrationRisk()` to replace those numbers with the combined direct + MF view.
+
+The X-Ray tab shows a loading indicator ("Fetching fund data...") until `renderXrayTab()` is called.
 
 ---
 
@@ -109,21 +138,65 @@ Classification keyword rules (check fund name):
 
 ### Step 2 — JavaScript fetches (browser, at runtime)
 
-For each Tier 1 fund:
+For each Tier 1 fund, three fetches in sequence:
+
 ```javascript
-// 1. Search for family_id
+// 1. Search for family_id and amfi_code
 const sr = await fetch(`https://mfdata.in/api/v1/search?q=${encodeURIComponent(fund.search)}`);
+const sd = await sr.json();
+const schemes = sd.data || [];
 const direct = schemes.find(s => s.plan_type === 'direct') || schemes[0];
 const family_id = direct.family_id;
+const amfi_code = direct.amfi_code;
 
-// 2. Fetch holdings
+// 2. Fetch holdings (confirmed endpoint)
 const hr = await fetch(`https://mfdata.in/api/v1/families/${family_id}/holdings`);
 // Returns equity_holdings[], debt_holdings[], other_holdings[]
 // Each item has: stock_name / name, weight_pct, sector, market_value
+
+// 3. Fetch ratios + actual expense ratio (parallel)
+// Ratios endpoint — assumed pattern, confirmed Sharpe/Beta/PE data exists on mfdata.in
+// Falls back gracefully if endpoint returns 404 or empty
+let sharpe_3y = null, sortino_3y = null, alpha_3y = null, beta_3y = null, actual_expense_ratio = null;
+try {
+  const [ratiosRes, schemeRes] = await Promise.all([
+    fetch(`https://mfdata.in/api/v1/families/${family_id}/ratios`),
+    fetch(`https://mfdata.in/api/v1/schemes/${amfi_code}`)
+  ]);
+
+  if (ratiosRes.ok) {
+    const rd = await ratiosRes.json();
+    const r = rd.data;
+    if (r) {
+      sharpe_3y  = r.sharpe_3y  ?? r.sharpe  ?? null;
+      sortino_3y = r.sortino_3y ?? r.sortino ?? null;
+      alpha_3y   = r.alpha_3y   ?? r.alpha   ?? null;
+      beta_3y    = r.beta_3y    ?? r.beta    ?? null;
+    }
+  }
+
+  if (schemeRes.ok) {
+    const sc = await schemeRes.json();
+    actual_expense_ratio = sc.data?.expense_ratio ?? null;
+  }
+} catch(e) {
+  // ratios or scheme fetch failed — continue without them
+}
+
+// Store per fund
+fund.sharpe_3y            = sharpe_3y;
+fund.sortino_3y           = sortino_3y;
+fund.alpha_3y             = alpha_3y;
+fund.beta_3y              = beta_3y;
+fund.actual_expense_ratio = actual_expense_ratio;
 ```
 
-If NOT_FOUND and fund type is `index` → fall back to Tier 2 (use embedded index weights).
-If NOT_FOUND and fund type is `active_equity` → mark `data_unavailable`.
+**Note on ratios endpoint:** The URL `mfdata.in/api/v1/families/{id}/ratios` follows the same pattern as holdings and is consistent with mfdata.in's documented Sharpe/Beta/PE feature. If the endpoint structure differs when tested live, update the field names accordingly. The `try/catch` ensures the rest of the X-Ray continues working even if ratios are unavailable.
+
+**Scheme endpoint is confirmed:** `mfdata.in/api/v1/schemes/{amfi_code}` returns `expense_ratio` directly — use this instead of the approximate ranges in section 1.10 whenever available.
+
+If NOT_FOUND on holdings and fund type is `index` → fall back to Tier 2 (use embedded index weights).
+If NOT_FOUND on holdings and fund type is `active_equity` → mark `data_unavailable`.
 
 ### Step 3 — Look-through calculation (in browser JavaScript)
 
@@ -139,9 +212,46 @@ effective_exposure[security] = total_look_through[security] + direct_holding_val
 effective_pct = effective_exposure[security] / total_portfolio_value × 100;
 ```
 
----
+### Step 4 — Update Analysis tab (combined concentration)
 
-## X-Ray Outputs
+After aggregating all look-through values, call `updateConcentrationRisk(allExposure)`:
+
+```javascript
+function updateConcentrationRisk(allExposure) {
+  // Sort by effective exposure descending
+  const sorted = Object.entries(allExposure)
+    .map(([name, d]) => ({name, ...d, pct: d.total / TOTAL_PORTFOLIO * 100}))
+    .sort((a, b) => b.total - a.total);
+
+  // Update top-N concentration bars in Analysis tab
+  const top1 = sorted[0]?.pct || 0;
+  const top3 = sorted.slice(0,3).reduce((s,h) => s + h.pct, 0);
+  const top5 = sorted.slice(0,5).reduce((s,h) => s + h.pct, 0);
+
+  // Replace "direct only" placeholders with combined values
+  document.getElementById('conc-top1').textContent = top1.toFixed(1) + '%';
+  document.getElementById('conc-top3').textContent = top3.toFixed(1) + '%';
+  document.getElementById('conc-top5').textContent = top5.toFixed(1) + '%';
+  document.getElementById('conc-source-label').textContent =
+    'Direct + MF look-through (as of [month])';
+
+  // Update halving scenario
+  const largest = sorted[0];
+  if (largest) {
+    const halvingImpact = (largest.total / 2 / TOTAL_PORTFOLIO * 100).toFixed(1);
+    const halvingRs = (largest.total / 2 / 100000).toFixed(2);
+    document.getElementById('conc-halving').textContent =
+      `If ${largest.name} halved, your portfolio drops ${halvingImpact}% (₹${halvingRs}L)`;
+  }
+
+  // Flag hidden concentrations (> 10% of total portfolio)
+  const flags = sorted.filter(h => h.pct > 10 && h.direct === 0);
+  // Render flags in the concentration section
+  renderHiddenConcentrationFlags(flags);
+}
+```
+
+Key principle: **the Analysis tab shows the conclusion, the X-Ray tab shows the breakdown.** `updateConcentrationRisk` only updates summary numbers. The full security-by-security table stays in the X-Ray tab.
 
 ### Output 1: Consolidated Look-Through Table
 
@@ -160,6 +270,41 @@ Columns:
 - **Fund columns** — one column per MF held, showing weight% → ₹ value (show — if fund doesn't hold it)
 - **Look-Through Total** — sum of all fund exposure + direct
 - **Effective %** — as % of total portfolio value
+
+### Output 1b: Fund Quality Summary
+
+For each Tier 1 fund where ratios were successfully fetched, show a compact quality row:
+
+| Fund | Return | Sharpe (3Y) | Sortino (3Y) | Alpha (3Y) | Expense | Verdict |
+|---|---|---|---|---|---|---|
+| PPFAS Flexi Cap | +11.0% | 1.2 | 1.5 | +2.1% | 0.58% | ✓ High quality |
+| Capitalmind Flexi Cap | +8.2% | 0.5 | 0.6 | -1.4% | 0.94% | ⚠ Underperforming |
+| DSP Multi Asset | -1.4% | 0.3 | 0.2 | -3.8% | 0.35% | ✗ Exit candidate |
+
+**Ratio interpretation:**
+
+Sharpe (3Y) — return per unit of total risk:
+- ≥ 1.0 → green — good risk-adjusted return
+- 0.5–1.0 → amber — moderate
+- < 0.5 → red — poor
+
+Sortino (3Y) — return per unit of downside risk only:
+- ≥ 1.5 → green — strong downside protection
+- 0.8–1.5 → amber — acceptable
+- < 0.8 → red — poor downside management
+- Note: Sortino is always ≥ Sharpe for a given fund. A large gap (e.g. Sharpe 0.8, Sortino 1.4) means the fund's volatility is mostly upside — good sign. A small gap (Sharpe 0.8, Sortino 0.9) means most volatility is downside — bad sign.
+
+Alpha (3Y) — excess return over benchmark after adjusting for beta:
+- > 0 → green — manager adding value above market exposure
+- -1% to 0 → amber — roughly market-like after risk adjustment
+- < -1% → red — manager destroying value; strong case for switching to index
+
+**Verdict logic:**
+- ✓ High quality: Sharpe ≥ 1.0 AND Alpha > 0 (fee justified by skill + efficiency)
+- ⚠ Review: any ratio in amber range, or Sharpe/Sortino conflict
+- ✗ Exit candidate: Alpha < -1% AND Sharpe < 0.5 (paying for underperformance)
+
+This table feeds directly into the task generator for consolidation and switch recommendations.
 
 ### Output 2: Hidden Concentration Flags
 
@@ -225,16 +370,14 @@ Same Notion-like design tokens as Summary, Fix List, and Analysis tabs:
 ### Tab Header
 
 ```
-Portfolio X-Ray                    Data as of: [latest AMFI disclosure date]
+Fund Detail View                   Data as of: [latest AMFI disclosure date]
 ⚠️ AMFI monthly disclosures — data may be up to 30 days old
 ```
 
-Show a coverage breakdown below the header:
+A brief orientation note at the top:
 ```
-Tier 1 — Live look-through:    [N] funds  ₹XX.XXL  (stock-level data)
-Tier 2 — Approximate index:    [N] funds  ₹XX.XXL  (top holdings, labelled approximate)
-Tier 3 — Asset class only:     [N] funds  ₹XX.XXL  (gold/silver/international)
-Tier 4 — Cash equivalent:      [N] funds  ₹XX.XXL  (arbitrage/liquid)
+These are the holdings behind your Concentration Risk numbers in the Analysis tab.
+[N] funds loaded · [N] approximate · [N] asset class only · [N] cash equivalent
 ```
 
 ### Section Order
