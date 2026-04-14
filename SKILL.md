@@ -25,7 +25,7 @@ Just type `/campfire-analyst` in the chat. That's it. No setup, no options to co
 You'll be asked to log into your Zerodha account via a one-click link. Once authorized, the analysis runs automatically.
 
 ### What happens next
-1. You'll see the **Campfire Dashboard** — a four-tab HTML file. The **Summary** tab leads with a single headline finding and the three most actionable quick wins. The **Fix List** tab has the full portfolio task center. The **Analysis** tab goes deeper — Campfire Vitals scores, investment style portrait, and sector breakdown. The **X-Ray** tab looks inside every mutual fund and maps your true underlying exposure — click it to load live data (requires internet connection in your browser).
+1. You'll see the **Campfire Dashboard** — a four-tab HTML file. The **Summary** tab leads with a single headline finding and the three most actionable quick wins. The **Fix List** tab has the full portfolio task center. The **Analysis** tab shows Campfire Vitals, style portrait, thematic map, concentration risk (combined across direct equity and MFs), and benchmark comparison. The **X-Ray** tab shows the full breakdown of what's inside each mutual fund — the evidence behind the concentration numbers, loaded automatically on page open.
 2. **investment.md** follows immediately — the full wealth document with deep allocation tables.
 3. Then the **prediction game** begins — Claude tries to guess your phone, car, watch, hotel preference and more from your portfolio alone, one prediction at a time. At the end it generates taste.md.
 
@@ -53,7 +53,7 @@ When triggered, this skill runs **seven sequential steps** on the user's portfol
 
 | # | Analysis | What It Produces | Reference File |
 |---|----------|-----------------|----------------|
-| 1 | Deep Portfolio Analysis | Sector breakdown, winners/losers, asset class mix, MF breakdown | (computed internally — feeds dashboard) |
+| 1 | Deep Portfolio Analysis | Sector breakdown, winners/losers, asset class mix, MF breakdown, thematic map, expense audit, liquidity, yield, beta | (computed internally — feeds dashboard) |
 | 2 | Campfire Vitals Report | 8 custom financial health markers scored 0-100 | `references/vitals-metrics.md` (computed internally — feeds dashboard) |
 | 3 | Investment Style Portrait | Written paragraph characterising the investor's style and blind spots | (computed internally — feeds dashboard) |
 | 4 | Portfolio X-Ray Classification | Fund tier classification + JavaScript engine for browser-side look-through | `references/xray-template.md` (embedded in dashboard HTML) |
@@ -142,7 +142,6 @@ Show value and % for each category. Identify AMC concentration (% of MF portfoli
 - **Top 15 Positions** by current value (stock name, value, return %, P&L)
 - **Multibaggers** (100%+ returns) sorted by return %
 - **Biggest Losers** sorted by absolute P&L loss
-- **Fragmentation Report** — identify where the same asset class is spread across multiple vehicles (e.g., 5 Nifty 50 funds, 4 gold ETFs). Flag any asset tracked by 3+ vehicles.
 
 ### 1.6 Consolidated Views
 
@@ -152,6 +151,283 @@ Build cross-cutting views that merge direct equity and MF data:
 - **Nifty 50 Trackers (all vehicles)** — every Nifty/Sensex instrument
 
 These consolidated views reveal the TRUE allocation that individual portfolio views hide.
+
+### 1.7 Concentration Risk (Direct Equity)
+
+Compute concentration in direct equity holdings:
+
+**Top position concentration:**
+```
+top1_pct  = largest_holding_value / total_de_value × 100
+top3_pct  = sum of top 3 holdings / total_de_value × 100
+top5_pct  = sum of top 5 holdings / total_de_value × 100
+top10_pct = sum of top 10 holdings / total_de_value × 100
+```
+
+**Thresholds:**
+- Top 1 position > 15% → flag as HIGH concentration
+- Top 3 positions > 35% → flag as HIGH
+- Top 5 positions > 50% → flag as MEDIUM
+- Top 10 positions > 70% → NORMAL for a focused portfolio
+
+**Stress scenario (compute silently, show as context):**
+"If your largest position halved, your direct equity portfolio would drop by X%"
+`largest_position_impact = (top1_pct / 2) / 100` → express as % portfolio impact
+
+Always identify: the top 3 single-stock risks by absolute ₹ exposure.
+
+### 1.8 Benchmark Context
+
+Infer approximate portfolio age from multibagger depth — no questions needed:
+
+```
+anchor_count_200plus = count of holdings with return > 200%
+anchor_count_100plus = count of holdings with return > 100%
+
+if anchor_count_200plus >= 5:
+    inferred_age = "5–7 years"
+    nifty_cagr_range = "13–15%"
+    nifty_total_return_range = "85–150%"
+elif anchor_count_100plus >= 5:
+    inferred_age = "3–5 years"
+    nifty_cagr_range = "13–16%"
+    nifty_total_return_range = "44–110%"
+elif anchor_count_100plus >= 2:
+    inferred_age = "2–3 years"
+    nifty_cagr_range = "12–15%"
+    nifty_total_return_range = "26–52%"
+else:
+    inferred_age = "1–2 years"
+    nifty_cagr_range = "8–13%"
+    nifty_total_return_range = "8–28%"
+```
+
+**Nifty 50 approximate CAGR reference (embed these values):**
+- 1 year: ~8–12%
+- 3 years: ~13–16%
+- 5 years: ~14–16%
+- 7 years: ~13–15%
+- 10 years: ~12–14%
+*(These are approximate historical figures — actual returns vary by start/end date)*
+
+**Compute benchmark verdict:**
+```
+de_return = total direct equity return %
+
+if de_return > top_of_range(nifty_total_return_range):
+    verdict = "beating"
+    margin = de_return - top_of_range
+elif de_return > bottom_of_range(nifty_total_return_range):
+    verdict = "roughly matching"
+    margin = 0
+else:
+    verdict = "trailing"
+    margin = bottom_of_range - de_return
+```
+
+**Always show with caveat:** This is inferred from your multibagger depth, not a true XIRR calculation. True comparison requires transaction dates. Use this as directional context only.
+
+---
+
+### 1.9 Thematic Portfolio Map
+
+Map every holding (direct equity + MF) to one or more themes. This reveals the structural economic bets the investor is making — consciously or not. Themes are cross-sector; a stock can appear in multiple themes.
+
+**India Themes:**
+```
+India Domestic Consumption    — FMCG, QSR, retail, staples, beverages
+India Financial Deepening     — banks, NBFCs, insurance, exchanges, fintech
+India Infrastructure Buildout — power, roads, ports, construction, EPC
+India Energy Transition       — renewables, green infra, EV
+India Travel & Mobility       — aviation, hotels, railways, OTAs
+India Digital & Fintech       — internet platforms, SaaS, payments
+India Manufacturing / PLI     — auto components, steel, textiles, speciality
+India Defence                 — shipbuilding, aerospace, ordnance
+India PSU Reform              — state-owned enterprises across all sectors
+India Pharma & Chemicals      — formulations, APIs, speciality chemicals, agrochemicals
+Precious Metals / Alternatives — gold, silver, SGBs, commodity ETFs
+```
+
+**Global Themes (primarily via MFs/ETFs/FOFs):**
+```
+Global Tech (US)              — Nasdaq 100, S&P 500, MAFANG, US tech stocks
+Global Consumption            — international consumer brands (via multi-asset MFs)
+Global Emerging Markets       — EM-focused FOFs, China, broad EM
+Defensive / Liquid            — arbitrage, liquid, overnight, money market
+```
+
+**For each theme, compute:**
+- Total ₹ value (direct + MF contributions combined)
+- % of total portfolio
+- Top 3 holdings within the theme by value
+- Whether the theme is reinforced or hedged by MF holdings
+
+**Theme concentration flags:**
+- Any single theme > 25% of total portfolio → flag
+- Top 2 themes > 45% combined → note the concentration
+- Any theme with zero exposure that seems relevant given the portfolio → flag as a gap
+
+**Write a 2-3 sentence thematic portrait** — not a list, a narrative. E.g.: "This portfolio is running three concentrated decade-long theses: India's financial deepening, India's infrastructure buildout, and India's PSU reform story. Global Tech via Nasdaq FOFs adds a US-growth counterweight. India's Defence and Energy Transition themes are conspicuously absent given the strong infrastructure tilt."
+
+**CRITICAL: Derive themes from actual holdings. Do not assign themes generically. Read the specific stocks and funds held.**
+
+---
+
+### 1.10 Expense Ratio Audit
+
+Compute the annual cost of the MF portfolio in rupees.
+
+**For each MF held:**
+```
+annual_cost_rs = fund_current_value × (expense_ratio / 100)
+```
+
+**Expense ratio source (in order of preference):**
+1. `actual_expense_ratio` fetched from `mfdata.in/api/v1/schemes/{amfi_code}` — use this when available
+2. Approximate ranges for direct plans (fallback when mfdata.in data not available):
+   - Active equity funds (flexi cap, large cap, ELSS): 0.5–1.0%
+   - Index funds (Nifty 50, LargeMidCap): 0.1–0.2%
+   - Multi-asset funds: 0.3–0.5%
+   - International FOFs: 0.5–1.0%
+   - Silver/Gold ETF FOFs: 0.1–0.3%
+   - Arbitrage funds: 0.3–0.5%
+   - Liquid funds: 0.1–0.2%
+
+**Compute totals:**
+```
+total_annual_cost_rs = sum of annual_cost_rs across all MFs
+total_annual_cost_pct = total_annual_cost_rs / total_mf_value × 100
+```
+
+**Identify savings opportunity:**
+For each active equity fund where an equivalent index fund exists:
+```
+savings_rs = fund_value × (active_er - index_er) / 100
+```
+
+Show top 3 funds by annual cost, and total potential savings if switched to cheaper equivalents.
+
+**Example output:** "Your MF portfolio costs approximately ₹X.XL/year in fees (X.X% effective). Your 3 most expensive funds cost ₹X,XXX/year. Switching to index equivalents where available saves ~₹X,XXX/year."
+
+---
+
+### 1.11 Liquidity Profile
+
+Classify every holding by how quickly and cleanly it can be exited.
+
+**Liquidity tiers:**
+
+```
+Tier L1 — Highly liquid (T+1, large cap)
+  Large cap direct equity (BSE 100 / Nifty 100 names)
+  Liquid/arbitrage funds
+  Gold ETFs, Silver ETFs
+  Index ETFs
+
+Tier L2 — Liquid (T+1 to T+3, may have some slippage)
+  Mid cap direct equity
+  Active equity MFs (T+3 redemption)
+  Multi-asset MFs
+
+Tier L3 — Illiquid (days to weeks, small/micro cap)
+  Small cap direct equity
+  Less liquid direct equity names
+
+Tier L4 — Locked / restricted
+  ELSS funds (3-year lock-in from each SIP date)
+  SGBs (8-year maturity, though tradeable)
+  Shares under pledge or collateral
+```
+
+**Compute:**
+```
+liquid_value    = L1 + L2 value
+illiquid_value  = L3 value
+locked_value    = L4 value
+liquid_pct      = liquid_value / total_portfolio × 100
+```
+
+**Stress scenario:**
+"If you needed ₹X.XL urgently (e.g., 25% of portfolio), you could access it from: [list of L1 holdings]. Your ELSS lock-in and SGBs (₹X.XL) cannot be accessed quickly."
+
+Flag if locked_value > 15% of total portfolio — meaningful constraint on liquidity.
+
+---
+
+### 1.12 Dividend & Income Yield
+
+Estimate the annual passive income from the direct equity portfolio.
+
+**Method:** Use approximate trailing dividend yields for dividend-paying stocks. Embed known yields for common dividend payers in Indian markets:
+
+```javascript
+const DIVIDEND_YIELDS = {
+  // PSU / high-yield names (approx trailing yield)
+  "COALINDIA":  6.5, "NTPC": 3.5, "POWERGRID": 4.0,
+  "ONGC":       4.5, "IOC":  5.0, "GAIL":      3.5,
+  "SBIN":       2.5, "BANKBARODA": 3.0,
+  // Consumer / FMCG
+  "ITC":        3.5, "HINDUNILVR": 1.5, "BRITANNIA": 1.2,
+  "MARICO":     1.5, "DABUR": 1.2,
+  // Others
+  "HDFCBANK":   1.2, "ICICIBANK": 0.8, "AXISBANK": 0.1,
+  "RELIANCE":   0.4, "BHARTIARTL": 0.5,
+  // SGBs
+  "SGBMAY28-GB": 2.5,  // 2.5% annual interest
+};
+// Default yield for unlisted stocks: 0%
+```
+
+**Compute:**
+```
+annual_dividend_rs = Σ (holding_value × dividend_yield / 100)
+dividend_yield_pct = annual_dividend_rs / total_de_value × 100
+```
+
+Show: estimated annual dividend income in ₹, effective yield on direct equity, and top 5 dividend contributors.
+
+Note clearly: "Estimated from trailing yields — actual dividends depend on company decisions and may change."
+
+---
+
+### 1.13 Weighted Portfolio Beta
+
+Estimate directional market sensitivity of the direct equity book.
+
+**Method:** Weight each stock's approximate beta by its portfolio weight.
+
+**Embed approximate betas for common holdings:**
+```javascript
+const STOCK_BETAS = {
+  // High beta (> 1.2) — moves more than market
+  "ADANIENT": 1.6, "ADANIGREEN": 1.8, "ADANIPOWER": 1.7,
+  "ATHERENERG": 1.9, "TATAPOWER": 1.5, "JSL": 1.4,
+  "PAYTM": 1.8, "ETERNAL": 1.6, "SWIGGY": 1.7, "IXIGO": 1.7,
+  "DIXON": 1.5, "NEWGEN": 1.4,
+  // Near-market beta (0.8–1.2)
+  "SBIN": 1.2, "ICICIBANK": 1.1, "HDFCBANK": 0.9,
+  "BHARTIARTL": 0.9, "RELIANCE": 1.0, "ITC": 0.7,
+  "COALINDIA": 1.0, "NTPC": 0.9, "POWERGRID": 0.8,
+  "INDIGO": 1.3, "M&M": 1.1,
+  // Low beta (< 0.8) — defensive
+  "HINDUNILVR": 0.6, "BRITANNIA": 0.6, "DABUR": 0.6,
+  "MARICO": 0.7, "GLAXO": 0.7,
+  // Default for unlisted: 1.0
+};
+```
+
+**Compute:**
+```
+portfolio_beta = Σ (holding_weight × stock_beta)
+  where holding_weight = holding_value / total_de_value
+```
+
+**Interpretation:**
+- Beta < 0.8 → defensive book, moves less than market
+- Beta 0.8–1.2 → market-like
+- Beta > 1.2 → aggressive, amplifies market moves in both directions
+
+Show: weighted beta, interpretation, and top 3 highest-beta holdings pulling the number up.
 
 ---
 
@@ -189,22 +465,28 @@ Write a single rich paragraph (150-250 words) that captures:
 
 ## Part 4: Portfolio X-Ray
 
-> **Do not present this section inline.** Compute the fund classification silently. The actual API calls happen in the user's browser at runtime via JavaScript — NOT from Claude's container. Claude's job is to generate correct JavaScript in the HTML dashboard that performs the look-through when the tab is opened.
+> **Do not present this section inline.** Compute the fund classification silently. The actual API calls happen in the user's browser via JavaScript — NOT from Claude's container. Claude's job is to generate correct JavaScript that fetches on page load in the background, so combined concentration data is ready by the time the user reads the Analysis tab.
 
-This is Campfire Analyst's deepest analysis. It classifies every MF held, then generates a JavaScript X-Ray engine inside the dashboard HTML that fetches mfdata.in at runtime and maps the true exposure across stocks, debt, and gold — merged with direct equity holdings.
+This is Campfire Analyst's deepest analysis. It classifies every MF held, then generates a JavaScript engine inside the dashboard HTML that fetches mfdata.in **immediately on page load** and feeds the results into two places:
+1. **The Concentration Risk section of the Analysis tab** — updated with combined direct + MF exposure
+2. **The X-Ray tab** — the detailed breakdown (fund holdings, overlap map, asset class summary)
 
 Read the reference file for full spec:
 → See `references/xray-template.md`
 
-### Architecture: Browser-Side Fetching
+### Architecture: Background Fetch on Page Load
 
 **CRITICAL: mfdata.in is fetched via JavaScript in the user's browser — not by Claude.**
-Claude's container cannot reach mfdata.in. The user's browser can. This is intentional — data is always fresh and no API calls happen before the user opens the tab.
+Claude's container cannot reach mfdata.in. The user's browser can.
+
+**CRITICAL: The fetch starts immediately when the HTML file opens — not when the user clicks the X-Ray tab.** This ensures concentration data is combined and ready when the user views the Analysis tab.
 
 Claude's job in Part 4:
-1. Classify each MF fund (see below)
+1. Classify each MF fund into the four-tier coverage model
 2. Embed the classification + fund data as a JavaScript array in the HTML
-3. The JavaScript engine in the X-Ray tab does the fetching when clicked
+3. The JavaScript engine fetches on page load (background, non-blocking), then:
+   - Updates the Concentration Risk section in the Analysis tab with combined numbers
+   - Populates the X-Ray tab with full detail
 
 ### Four-Tier Coverage Model
 
@@ -263,16 +545,29 @@ Tier 4 arbitrage:      "Arbitrage", "Liquid", "Overnight", "Money Market",
 Claude outputs in the X-Ray tab JavaScript:
 ```javascript
 const MF_FUNDS = [
+  // Tier 1 — active equity / multi-asset (live fetch from mfdata.in)
+  // sharpe_3y, sortino_3y, alpha_3y, beta_3y, actual_expense_ratio populated at runtime by Step 2 fetch
   {name:"FUND NAME", search:"search query", value:NNNN, tier:1, type:"active_equity"},
+
+  // Tier 1/2 — index fund (try mfdata.in, fall back to embedded weights)
   {name:"FUND NAME", search:"", value:NNNN, tier:2, type:"index", indexName:"Nifty 50"},
+
+  // Tier 3 — commodity / international FOF (asset class only)
   {name:"FUND NAME", search:"", value:NNNN, tier:3, type:"commodity_fof", assetClass:"silver"},
+
+  // Tier 4 — arbitrage / liquid (cash equivalent)
   {name:"FUND NAME", search:"", value:NNNN, tier:4, type:"arbitrage"},
-  ...
 ];
 ```
 
-The JavaScript engine handles all fetching, look-through calculation, and rendering.
-See `references/xray-template.md` for the full JavaScript spec.
+The JavaScript engine:
+1. Fetches holdings from `mfdata.in/api/v1/families/{family_id}/holdings`
+2. Fetches ratios from `mfdata.in/api/v1/families/{family_id}/ratios` → populates `sharpe_3y`, `sortino_3y`, `alpha_3y`, `beta_3y`
+3. Fetches scheme details from `mfdata.in/api/v1/schemes/{amfi_code}` → populates `actual_expense_ratio`
+4. Updates Concentration Risk section in Analysis tab with combined numbers
+5. Populates the X-Ray tab: look-through table + Fund Quality Summary (Sharpe, Sortino, Alpha, expense, verdict)
+
+See `references/xray-template.md` for the full JavaScript spec and fallback handling.
 
 ---
 
@@ -307,15 +602,23 @@ One bold sentence. The single most important insight from the entire analysis.
 Use this priority order to pick it:
 
 ```
-1. Any security with effective look-through exposure > 8% of portfolio
-   → "[Stock] is your largest position at X% — you own it across N funds"
-2. Any High Impact + Quick Win task
+1. Any single direct equity position > 15% of direct equity book
+   → "[Stock] is X% of your direct equity — if it halved, your portfolio drops ₹Y.YL"
+   (Note: combined exposure including MFs will be shown in Analysis tab once loaded)
+
+2. Any security with effective look-through exposure > 10% of total portfolio (combined)
+   → "[Stock] is your largest real position at X% combined — direct + N funds"
+
+3. Any High Impact + Quick Win task
    → "You have N Nifty 50 funds doing the same job — consolidating saves ₹X.XL in complexity"
-3. More than 5 multibaggers
+
+4. More than 5 multibaggers
    → "Your stock picks are working — N positions have doubled or more"
-4. Largest fragmentation issue
+
+5. Largest fragmentation issue
    → "X gold instruments, Y ELSS funds — one each would do the same job"
-5. Return vs estimated Nifty 50 benchmark (~12% annualised)
+
+6. Return vs estimated Nifty 50 benchmark
    → "Your portfolio is [beating / trailing] the Nifty 50 benchmark"
 ```
 
@@ -351,18 +654,54 @@ Implement in vanilla JS + HTML. All state in JS variables.
 
 **Answers: "Why does my portfolio look this way?" — for the curious.**
 
+**Self-assessment**
 1. **Campfire Vitals** — all 8 scores with progress bars and one-line interpretations. Overall score.
 2. **Investment Style Portrait** — the paragraph from Part 3.
-3. **Top 10 Holdings** — merged list across direct equity and MF, sorted by current value.
-4. **Sector Allocation** — horizontal bars for direct equity sectors.
+
+**What am I actually betting on?**
+3. **Thematic Map** — from Part 1 section 1.9.
+   - Horizontal bars showing ₹ value and % per theme
+   - 2-3 sentence thematic portrait (narrative, not list)
+   - Theme gaps flagged: relevant themes with zero exposure
+
+**How am I performing?**
+4. **Benchmark Context** — from Part 1 section 1.8. Inferred portfolio age, verdict vs Nifty 50.
+
+**What are my risks?**
+5. **Concentration Risk** — single unified view combining direct equity + MF look-through.
+   - Shows combined effective exposure per security (direct + via all MFs)
+   - Top 1 / Top 3 / Top 5 as % of total portfolio — not just direct equity
+   - Flags if any security > 10% of total portfolio (combined)
+   - Halving scenario: "If [largest combined position] halved, your total portfolio drops ₹Y.YL"
+   - Starts with direct-only numbers on page load. Updates automatically once X-Ray fetch completes.
+   - Label: "Direct equity only" until updated, then "Direct + MF look-through (as of [month])"
+
+**Portfolio health at a glance**
+6. **Portfolio Metrics** — four compact metric cards in a 2×2 grid:
+   - **Expense Cost** — total annual MF fees in ₹/year (from 1.10)
+   - **Liquidity** — % of portfolio accessible quickly (from 1.11)
+   - **Dividend Yield** — estimated annual income from direct equity (from 1.12)
+   - **Portfolio Beta** — weighted beta of direct equity book (from 1.13)
+
+**The raw data**
+7. **Top 10 Holdings** — merged list across direct equity and MF, sorted by current value.
+8. **Sector Allocation** — horizontal bars for direct equity sectors.
 
 ---
 
 ### Tab 4: X-Ray
 
-**Answers: "What's actually inside my funds?" — opt-in detail.**
+**Answers: "What's inside each of my funds?" — the supporting detail.**
 
-Full Portfolio X-Ray as per `references/xray-template.md`. Stays as its own tab so the look-through table doesn't pollute the Analysis tab on mobile.
+The X-Ray tab shows the detail behind the Concentration Risk numbers in the Analysis tab:
+- Fund-by-fund breakdown — what each fund holds and at what weight
+- Overlap map — which fund pairs hold the same stocks
+- Asset class look-through — true allocation across equity/debt/gold/international/cash
+- Coverage summary — which funds were fetched live, which used approximate data, which are cash equivalents
+
+Data loads in the background on page open — by the time the user clicks this tab, it should already be populated. If still loading, show a progress indicator.
+
+See `references/xray-template.md` for full spec.
 
 ---
 
@@ -393,8 +732,10 @@ Compile Parts 1-3 into a structured markdown document with these sections:
 3. Direct Equity Portfolio (snapshot, sectors, top positions, baggers, losers)
 4. Mutual Fund Portfolio (overview, categories, top holdings, AMC concentration)
 5. Consolidated Views (precious metals, international, Nifty trackers — with fragmentation notes)
-6. Investor Identity Profile (style tags, behavioral signals, consumer personality type)
-7. Portfolio Gaps & Opportunities (table of gaps with current state + suggestion)
+6. Thematic Portfolio Map (₹ and % per theme, thematic portrait, theme gaps)
+7. Portfolio Metrics (expense cost, liquidity profile, dividend yield, weighted beta)
+8. Investor Identity Profile (style tags, behavioral signals, consumer personality type)
+9. Portfolio Gaps & Opportunities (table of gaps with current state + suggestion)
 
 Save to `/mnt/user-data/outputs/investment.md` and present to user.
 
@@ -483,7 +824,7 @@ When triggered, run in this order:
 
 1. **Pull data** (Step 0) — get holdings, MF, margins
 2. **Compute silently** (Parts 1-3) — run all analysis, score Campfire Vitals, write style portrait, generate task list. **Do not output anything to the user yet.**
-3. **Portfolio X-Ray classification** (Part 4) — classify every MF fund into the four-tier coverage model. Prepare the JavaScript fund data array for the dashboard. **No API calls happen here — fetching happens in the user's browser when they click the X-Ray tab.**
+3. **Portfolio X-Ray classification** (Part 4) — classify every MF fund into the four-tier coverage model. Prepare the JavaScript fund data array for the dashboard. **The JavaScript fetches mfdata.in on page load in the background — feeding both the Concentration Risk section of the Analysis tab and the X-Ray tab.**
 4. **Campfire Dashboard** (Part 5) — generate single four-tab HTML file (Summary + Fix List + Analysis + X-Ray), save, present. **This is the first thing the user sees.**
 5. **Generate investment.md** (Part 6) — save the full wealth document, present to user
 6. **taste.md Prediction Game** (Part 7) — interactive, takes multiple turns
