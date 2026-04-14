@@ -18,10 +18,28 @@ Scan the completed analysis for these patterns:
 - Any asset class tracked by 3+ vehicles → generate a "Consolidate X" task
 - Common: Nifty 50/Sensex across multiple MFs + ETFs, gold across multiple ETFs + SGBs + MFs
 - Include: current vehicle count, total value, recommended target (1-2 vehicles), which to keep and which to exit
+- **When Sharpe + Sortino data is available:** Use both to decide WHICH fund to keep. Sharpe is the primary signal; Sortino confirms whether the advantage holds on downside risk specifically.
+
+  Tiebreaker priority: (1) Alpha if available → (2) Sharpe → (3) Sortino → (4) expense ratio
+
+  Example task description with all three:
+  > "You hold 3 Nifty 50 trackers. UTI Nifty 50 (Sharpe 1.1, Sortino 1.4, 0.10%) vs SBI Nifty (Sharpe 0.9, Sortino 1.0, 0.15%) vs HDFC Index (Sharpe 0.9, Sortino 0.9, 0.20%). UTI Nifty 50 leads on both risk-adjusted metrics and has the lowest cost. Exit SBI and HDFC."
+
+  When Sharpe and Sortino point in the same direction: state it directly — "both measures favour Fund A."
+  When they diverge (e.g. good Sharpe, poor Sortino): flag it — "Fund A's returns are efficient overall but poorly managed on the downside."
+
+  If ratios are not available for some funds, fall back to expense ratio as the tiebreaker.
+
+**Concentration Risk Tasks** (category: "allocation")
+- Single stock > 15% of direct equity → generate "Review [Stock] Concentration" task (HIGH impact)
+  - Subtitle: "[Stock] is X% of direct equity"
+  - Action: compute halving impact in ₹, suggest trimming to 8-10% max, explain how to size the trim
+- Top 3 positions > 40% of direct equity → generate "Reduce Direct Equity Concentration" task (MEDIUM impact)
+  - Subtitle: "Top 3 positions = X% of direct equity"
+  - Action: identify which of the 3 have highest conviction, suggest partial exit on the weakest
 
 **Rebalance Tasks** (category: "allocation")
 - International exposure < 8% of total → generate "Increase International" task
-- Single sector > 30% of direct equity → generate "Review X Concentration" task
 - Single AMC > 30% of MF portfolio → generate "Review AMC Concentration" task
 - No debt allocation and portfolio > ₹50L → generate "Add Debt Allocation" task
 - Small/mid cap < 10% of MF portfolio → consider generating rebalance task
@@ -36,6 +54,35 @@ Scan the completed analysis for these patterns:
 - Multiple ELSS funds → generate "Optimize ELSS" task
 - Regular plan MFs instead of direct plan → generate "Switch to Direct Plans" task
 - SIP spread too thin across many funds → generate "Consolidate SIPs" task
+- Total annual MF expense cost > ₹15,000/year → generate "Reduce Fund Fees" task (HIGH impact)
+  - Subtitle: "₹X,XXX/year in fund fees — ₹X,XXX/year avoidable"
+  - Action: List the 3 most expensive funds, show equivalent cheaper alternatives, compute annual saving
+  - Use `actual_expense_ratio` from mfdata.in schemes endpoint if available; fall back to approximate ranges
+- Any active equity fund where equivalent index fund exists AND active fund has lower return than index → generate "Switch [Fund] to Index" task (MEDIUM impact)
+  - **Alpha is the primary signal.** When available, lead with Alpha — it directly answers whether the manager is earning their fee.
+  - **Full reasoning hierarchy:**
+    1. **Alpha < -1%** → manager destroying value after risk adjustment → upgrade to HIGH impact regardless of other signals
+    2. **Sharpe < index Sharpe (~0.9) AND Sortino < index Sortino** → poor risk-adjusted return on both measures → HIGH impact
+    3. **Sharpe < index Sharpe** alone → MEDIUM impact
+    4. **Alpha > 0 despite lower raw return** → note it explicitly as a nuance, keep MEDIUM impact
+
+  Task description template when all three ratios available:
+  > "[Fund] has returned X% vs Nifty 50's Y%. But risk-adjusted: Alpha -Z% (manager not adding value), Sharpe A vs index ~0.9, Sortino B vs index ~1.1. You are paying [expense ratio]% for a manager delivering worse returns AND worse risk efficiency. Switch to [index fund] and save ₹X,XXX/year."
+
+  Task description when Alpha is positive but returns are below index:
+  > "[Fund] has returned X% vs Nifty 50's Y% — raw returns trail, but Alpha is +Z% suggesting the manager is generating genuine risk-adjusted value. The underperformance is timing, not skill. Review rather than switch immediately."
+
+  If ratios are not available: use raw return vs index as the sole signal, note the limitation.
+
+**Liquidity Tasks** (category: "optimization")
+- Locked/illiquid holdings > 20% of total portfolio → generate "Review Liquidity Position" task (MEDIUM impact)
+  - Subtitle: "₹X.XL locked or illiquid"
+  - Action: List ELSS lock-in status per fund, SGB maturity dates, flag any small-cap positions > ₹1L
+
+**Thematic Gap Tasks** (category: "allocation")
+- Zero Global Tech exposure for portfolio > ₹50L → generate "Add International Diversification" task
+- Zero Precious Metals exposure → generate "Add Gold Allocation" task (note: only if truly zero across all vehicles)
+- Any single theme > 30% of portfolio → generate "Review [Theme] Concentration" task
 
 **Tracking Tasks** (category: "tracking")
 - No clear XIRR tracking → generate "Set Up XIRR Tracking" task
