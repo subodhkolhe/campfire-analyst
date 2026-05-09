@@ -363,9 +363,9 @@ Same Notion-like design tokens as Summary, Fix List, and Analysis tabs:
 - Background: `#ffffff`
 - Surface: `#f7f7f5`
 - Border: `#e8e8e4`
-- Text: `#37352f`
-- Secondary: `#787774`
-- Font: Inter
+- Text: `#111110`
+- Secondary: `#888880`
+- Font: IBM Plex Sans
 
 ### Tab Header
 
