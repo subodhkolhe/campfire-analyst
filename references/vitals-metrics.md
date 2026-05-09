@@ -179,7 +179,7 @@ The Campfire Vitals framework maps 8 biological metrics to assess physical readi
 
 ### Format
 
-Present as a clean, Notion-like table or list — not terminal ASCII art. Use simple progress indicators.
+Present as a clean, Minimal table or list — not terminal ASCII art. Use simple progress indicators.
 
 ```
 Campfire Vitals Report
@@ -201,9 +201,9 @@ Overall Recovery Score     71/100
 
 When generating as part of a React dashboard, use:
 - White background, thin warm-gray dividers between rows
-- Score number in bold `#37352f`
+- Score number in bold `#111110`
 - Progress bar: thin (4px), colored by score range (green > 75, amber 50-75, red < 50), track in `#e8e8e4`
-- One-line interpretation in `#787774`
+- One-line interpretation in `#888880`
 - Overall score slightly larger, with a subtle top border separator
 
 **No dark backgrounds. No terminal aesthetic. Clean, light, typographic.**
@@ -214,9 +214,9 @@ Write 3-4 sentences interpreting the scores in context. What's strong, what need
 
 ### Score Visualization
 
-Present scores in a clean Notion-like format — white background, thin dividers, colored progress bars. When creating a React artifact, use the same Notion-like design language as the task center:
+Present scores in a clean Minimal format — white background, thin dividers, colored progress bars. When creating a React artifact, use the same Minimal design language as the task center:
 - White/warm-gray palette
-- Inter font family
+- IBM Plex Sans font family
 - Thin progress bars colored by score range
 - No shadows, no dark theme, no terminal aesthetic
 - Generous whitespace between metric rows
