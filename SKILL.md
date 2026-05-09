@@ -622,7 +622,7 @@ Use this priority order to pick it:
    → "Your portfolio is [beating / trailing] the Nifty 50 benchmark"
 ```
 
-Style: 18-20px, font-weight 600, `#37352f`. No icon, no colour. Just the sentence.
+Style: 18-20px, font-weight 600, `#111110`. No icon, no colour. Just the sentence.
 
 **2. Hero Numbers**
 Three cards: Total Wealth · Overall Return % · Holdings Count
@@ -713,11 +713,11 @@ All four tabs share the same design tokens:
 --bg: #ffffff;
 --surface: #f7f7f5;
 --border: #e8e8e4;
---text: #37352f;
---text-secondary: #787774;
+--text: #111110;
+--text-secondary: #888880;
 ```
 
-Notion-like minimalist. White background, Inter font, thin dividers. No dark theme, no shadows, no gradients. Max-width 720px, centered. Self-contained HTML with inline CSS and inline JS.
+Minimal minimalist. White background, Inter font, thin dividers. No dark theme, no shadows, no gradients. Max-width 720px, centered. Self-contained HTML with inline CSS and inline JS.
 
 Save to `/mnt/user-data/outputs/campfire-dashboard.html` and present to user.
 
