@@ -19,7 +19,7 @@ All four tabs share the same design tokens and feel like one cohesive app. Gener
 
 ## Design Language
 
-Notion-like minimalist. White background. Inter font. No dark theme. No shadows. No gradients. Color only through small accent elements.
+Minimal minimalist. White background. IBM Plex Sans font. No dark theme. No shadows. No gradients. Color only through small accent elements.
 
 ### Tokens
 
@@ -27,15 +27,15 @@ Notion-like minimalist. White background. Inter font. No dark theme. No shadows.
 --bg: #ffffff;
 --surface: #f7f7f5;
 --border: #e8e8e4;
---text: #37352f;
---text-secondary: #787774;
+--text: #111110;
+--text-secondary: #888880;
 --text-muted: #b4b4b0;
 --accent-purple: #6940a5;
 --accent-orange: #d9730d;
 --accent-red: #e03e3e;
 --accent-green: #0f7b6c;
 --accent-blue: #2f6beb;
---font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+--font: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 --mono: 'SF Mono', 'Consolas', 'Fira Code', monospace;
 ```
 
@@ -44,8 +44,8 @@ Notion-like minimalist. White background. Inter font. No dark theme. No shadows.
 1. Single page, no scrolling sections — the whole report flows vertically within each tab
 2. Sections separated by generous whitespace (40-60px), not heavy borders
 3. Numbers in monospace, text in Inter
-4. Section headers: 18-20px, semibold, `#37352f`, no uppercase
-5. Metric labels: 13px, `#787774`
+4. Section headers: 18-20px, semibold, `#111110`, no uppercase
+5. Metric labels: 13px, `#888880`
 6. Values: 24-32px for hero numbers, 14-16px for table data
 7. Progress bars: 3-4px thin, colored by score range
 8. Tables: no outer border, thin `#e8e8e4` row dividers, no alternating row colors
@@ -72,14 +72,14 @@ Notion-like minimalist. White background. Inter font. No dark theme. No shadows.
   padding: 8px 0;
   font-size: 14px;
   font-weight: 500;
-  color: #787774;
+  color: #888880;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
 .tab.active {
-  color: #37352f;
-  border-bottom-color: #37352f;
+  color: #111110;
+  border-bottom-color: #111110;
 }
 ```
 
@@ -148,7 +148,7 @@ Generate one bold sentence using this priority order:
    → "Your portfolio is [up XX.X%] overall — [beating / roughly matching / trailing] the Nifty 50 benchmark"
 ```
 
-Style: `font-size: 18px; font-weight: 600; color: #37352f; line-height: 1.5`. No icon. No background. Just the sentence.
+Style: `font-size: 18px; font-weight: 600; color: #111110; line-height: 1.5`. No icon. No background. Just the sentence.
 
 ### Top 3 Quick Wins
 
@@ -259,7 +259,7 @@ Single self-contained HTML file. Inline CSS. No external dependencies except Goo
   <title>Campfire Analyst — Portfolio Report</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* All styles inline — Notion-like tokens */
+    /* All styles inline — Minimal tokens */
   </style>
 </head>
 <body>
@@ -272,9 +272,9 @@ Single self-contained HTML file. Inline CSS. No external dependencies except Goo
 
 ```css
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
   background: #ffffff;
-  color: #37352f;
+  color: #111110;
   max-width: 720px;
   margin: 0 auto;
   padding: 40px 24px;
@@ -288,7 +288,7 @@ body {
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  color: #37352f;
+  color: #111110;
   margin-bottom: 16px;
 }
 
@@ -296,12 +296,12 @@ body {
   font-family: 'SF Mono', 'Consolas', monospace;
   font-size: 28px;
   font-weight: 700;
-  color: #37352f;
+  color: #111110;
 }
 
 .label {
   font-size: 13px;
-  color: #787774;
+  color: #888880;
 }
 
 .card {
@@ -324,7 +324,7 @@ td, th {
 th {
   text-align: left;
   font-weight: 500;
-  color: #787774;
+  color: #888880;
   font-size: 12px;
 }
 ```
@@ -348,7 +348,7 @@ th {
 
 ### Sector Bars
 
-Horizontal bars using simple div widths. Max width = largest sector %. Color: `#37352f` at 30% opacity for a soft, Notion-like feel. No bright colors for sector bars — let the numbers speak.
+Horizontal bars using simple div widths. Max width = largest sector %. Color: `#111110` at 30% opacity for a soft, Minimal feel. No bright colors for sector bars — let the numbers speak.
 
 ### Responsive
 
