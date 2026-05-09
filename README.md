@@ -16,6 +16,11 @@ A Claude skill for Zerodha users. Connects to your account, runs a full portfoli
 
 ---
 
+## What it looks like
+
+**Summary tab** — headline finding, hero numbers, quick wins
+![Summary](docs/summary.png)
+
 ## How It Works
 
 **Campfire Vitals**
