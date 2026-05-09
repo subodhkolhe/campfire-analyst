@@ -125,14 +125,14 @@ Each task object needs:
 
 ### Visual Design
 
-**Theme:** Notion-like light minimalist. Clean, airy, typographic. No dark backgrounds. No heavy borders. Feels like a well-organized personal workspace.
+**Theme:** Minimal-like light minimalist. Clean, airy, typographic. No dark backgrounds. No heavy borders. Feels like a well-organized personal workspace.
 
 **Color Palette:**
 - Background: `#ffffff`
-- Surface/hover: `#f7f7f5` (Notion's warm gray)
+- Surface/hover: `#f7f7f5` (Minimal's warm gray)
 - Border: `#e8e8e4` (barely visible dividers)
-- Text primary: `#37352f` (Notion's warm black)
-- Text secondary: `#787774` (Notion's secondary)
+- Text primary: `#111110` (Minimal's warm black)
+- Text secondary: `#888880` (Minimal's secondary)
 - Text muted: `#b4b4b0`
 
 **Fonts:**
@@ -140,7 +140,7 @@ Each task object needs:
 - Monospace accents (values, numbers): `'SF Mono', 'Consolas', monospace`
 - Headings: Same as body but heavier weight. No separate display font.
 
-**Category Colors (muted, Notion-style):**
+**Category Colors (muted, Minimal-style):**
 ```javascript
 const CATEGORIES = {
   consolidation: { label: "Consolidate", color: "#6940a5", bg: "#f3e8ff", icon: "⊕" },  // purple
@@ -156,7 +156,7 @@ const CATEGORIES = {
 const IMPACT_CONFIG = {
   high:   { label: "High Impact", color: "#e03e3e", bg: "#fbe4e4" },
   medium: { label: "Medium",      color: "#d9730d", bg: "#fdecc8" },
-  low:    { label: "Low",         color: "#787774", bg: "#f1f1ef" },
+  low:    { label: "Low",         color: "#888880", bg: "#f1f1ef" },
 };
 ```
 
@@ -169,7 +169,7 @@ const EFFORT_CONFIG = {
 };
 ```
 
-### Design Principles (Notion-like)
+### Design Principles (Minimal-like)
 
 1. **Whitespace is the design.** Generous padding, breathing room between elements. Nothing cramped.
 2. **Borders are almost invisible.** Use `#e8e8e4` dividers sparingly — prefer spacing over lines.
@@ -178,7 +178,7 @@ const EFFORT_CONFIG = {
 5. **Checkboxes should feel hand-drawn.** Simple square outline, subtle rounded corners (2px), thin border. When checked: filled with the category color, white checkmark.
 6. **Hover states are subtle.** Background shifts to `#f7f7f5` on hover. No color explosions.
 7. **Typography does the heavy lifting.** Clear hierarchy through size and weight alone. No uppercase labels (except tiny category tags). No letter-spacing tricks.
-8. **Icons are emoji, not icon libraries.** Keep the ⊕ ⚖ ✂ ⚡ ◎ category icons. They feel native and Notion-esque.
+8. **Icons are emoji, not icon libraries.** Keep the ⊕ ⚖ ✂ ⚡ ◎ category icons. They feel native and Minimal-esque.
 
 ### Layout Structure
 
@@ -238,9 +238,9 @@ Minimal sticky footer at bottom:
 - Use `addEventListener('click', ...)` for checkbox toggles, row expand/collapse, tab filters
 - Store task state in a plain JS array; re-render relevant DOM nodes on interaction
 - Use `<details>`/`<summary>` or manual click toggling for expand/collapse
-- All styles inline — consistent with the dashboard's Notion-like design tokens
+- All styles inline — consistent with the dashboard's Minimal-like design tokens
 - Responsive — should work on mobile widths
-- **No box shadows, no gradients, no rounded card borders.** The Notion aesthetic is flat, typographic, and relies on whitespace.
+- **No box shadows, no gradients, no rounded card borders.** The Minimal aesthetic is flat, typographic, and relies on whitespace.
 
 ---
 
